@@ -194,7 +194,7 @@
         var camera=new pc.Entity('Map viewer');
         camera.addComponent('camera',{fov:66,nearClip:0.1,farClip:1600,clearColor:new pc.Color(0.55,0.75,0.87)});
         app.root.addChild(camera);
-        var moveGuard=null;
+        var moveGuard=null, externalControl=false;
         var bird=true,px=0,pz=120,yaw=0,pitch=0,keys={},lookId=null,
             stickId=null,stickX=0,stickY=0,stick=document.getElementById('stick'),
             joy=document.getElementById('joystick'),look=document.getElementById('look');
@@ -237,6 +237,7 @@
         window.addEventListener('keyup',function(e){keys[e.code]=false;});
         app.on('update',function(dt){
             if(bird)return;
+            if(externalControl){place();return;}
             var f=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0)-stickY;
             var r=(keys.KeyD?1:0)-(keys.KeyA?1:0)+stickX;
             var size=Math.hypot(f,r);if(size>1){f/=size;r/=size;}
@@ -257,6 +258,14 @@
             getPlayerPosition:function(){return {x:px,z:pz};},
             setPlayerPosition:function(x,z){px=x;pz=z;place();},
             registerMoveGuard:function(fn){moveGuard=fn;},
+            setExternalControl:function(value){externalControl=!!value;},
+            getControlInput:function(){
+                return {
+                    mx:(keys.KeyD?1:0)-(keys.KeyA?1:0)+stickX,
+                    mz:(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0)-stickY,
+                    yaw:((yaw%360)+360)%360, pitch:pitch
+                };
+            },
             adjustLook:function(dx,dy){
                 yaw -= 0.18 * dx;
                 pitch = Math.max(-60, Math.min(60, pitch - 0.14 * dy));
