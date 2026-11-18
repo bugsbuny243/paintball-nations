@@ -15,12 +15,11 @@ Bu depoda `.github/workflows/playcanvas-sync.yml` iş akışı bulunur. Önce **
 
 1. PlayCanvas hesabının **Account / API Tokens** bölümünden erişim tokenı oluştur. PlayCanvas resmî API rehberi: https://developer.playcanvas.com/user-manual/api/
 2. GitHub deposunda **Settings → Secrets and variables → Actions → Secrets → New repository secret** bölümüne gir. Adı `PLAYCANVAS_TOKEN`, değeri oluşturduğun PlayCanvas tokenı olsun. **Tokenı sohbet mesajına, kaynak koda veya README'ye yapıştırma.**
-3. PlayCanvas Editor'deki **Version Control** menüsünden kullandığın dalın kimliğini (**Copy branch ID**) kopyala.
-4. GitHub **Settings → Secrets and variables → Actions → Variables** bölümünde `PLAYCANVAS_BRANCH_ID` değişkenini bu değerle oluştur.
-5. Aynı yerde `PLAYCANVAS_SYNC_ENABLED` adlı değişkeni `true` yap. Bu ayar olmadan iş akışı PlayCanvas'a veri yazmaz.
-6. GitHub **Actions → Sync Paintball Nations to PlayCanvas → Run workflow** ile ilk aktarımı manuel başlat.
-7. PlayCanvas'ın **Assets** panelinde `paintballNations.js` script varlığını gör. Ayrı boş sahnede root `Scene` altında yeni bir **PaintballGame** Entity oluştur, **Script Component** ekle ve bu scripti Entity'ye bağla. **2D Screen altına ekleme.** Play'e basarak test et.
-8. Sonraki `playcanvas/paintballNations.js` dosyası değişiklikleri, `main` dalına geldiğinde aktarılır.
+3. GitHub **Settings → Secrets and variables → Actions → Variables** bölümüne git. `PLAYCANVAS_SYNC_ENABLED` adlı repository variable oluştur; değeri `true` olsun. Bu ayar olmadan iş akışı PlayCanvas'a veri yazmaz.
+4. GitHub **Actions → Sync Paintball Nations to PlayCanvas → Run workflow** ile ilk aktarımı manuel başlat.
+5. Script PlayCanvas'ın **main** dalının kimliğini resmî Branches API üzerinden kendisi bulur; ayrıca branch ID girmen gerekmez.
+6. PlayCanvas'ın **Assets** panelinde `paintballNations.js` script varlığını gör. Ayrı boş sahnede root `Scene` altında yeni bir **PaintballGame** Entity oluştur, **Script Component** ekle ve bu scripti Entity'ye bağla. **2D Screen altına ekleme.** Play'e basarak test et.
+7. Sonraki `playcanvas/paintballNations.js` dosyası değişiklikleri, `main` dalına geldiğinde aktarılır.
 
 ### Güvenlik ve sınırlar
 
@@ -28,6 +27,7 @@ Bu depoda `.github/workflows/playcanvas-sync.yml` iş akışı bulunur. Önce **
 - Aynı adla birden fazla asset bulunursa güvenlik için işlem durur.
 - GitHub deposu **Public**; hiçbir tokenı, şifreyi veya kişisel bilgiyi commit etme.
 - Script sözdizimi GitHub Actions içinde kontrol edilir, ancak Android üzerinde oyun performansı ve PlayCanvas Editor çalışması ayrıca test edilmelidir.
+- PlayCanvas'ın `main` dalı otomatik seçilir. Yanlış dalı değiştirmemek için API'den `main` bulunamazsa işlem güvenle durur.
 - İptal etmek için `PLAYCANVAS_SYNC_ENABLED` değerini `false` yapabilir, PlayCanvas'ta tokenı iptal edebilirsin.
 
 ## Referanslar
