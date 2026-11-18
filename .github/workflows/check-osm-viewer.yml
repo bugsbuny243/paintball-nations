@@ -15,6 +15,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: osm-macka-3d-validate
+  cancel-in-progress: true
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -53,12 +57,12 @@ jobs:
           grep -F 'istanbul-macka.json' maps/macka-viewer.js
           grep -F 'macka-paintball.js' maps/macka.html
           grep -F 'macka.html?play=1' index.html
-      - name: Install temporary browser test dependencies
+      - name: Install small browser automation dependency
+        run: npm install --no-save playwright
+      - name: Smoke-test paintball map using GitHub runner Chrome
         run: |
-          npm install --no-save playwright
-          npx playwright install --with-deps chromium
-      - name: Smoke-test paintball map in Chromium
-        run: |
+          export CHROME_BIN="$(command -v google-chrome-stable || command -v google-chrome || command -v chromium)"
+          test -n "$CHROME_BIN"
           python3 -m http.server 8765 --bind 127.0.0.1 > /tmp/paintball-http.log 2>&1 &
           sleep 2
           node tests/smoke-macka.mjs
