@@ -1,5 +1,14 @@
 # Paintball Nations 🎨
 
+## ✅ A2 — Maçka çok oyunculu ağ prototipi
+
+- [A2 çevrim içi altyapısı: kod, test sonucu ve sınırlar](docs/online-a2-implementation.md)
+- [İki gerçek tarayıcıda başarılı Colyseus + PlayCanvas testi](https://github.com/bugsbuny243/paintball-nations/actions/runs/44389900415)
+- Sunucu: `apps/game-backend/src/online-server.ts`, `rooms/macka-room.ts`, `rooms/macka-simulation.ts`.
+- İstemci: `maps/macka-online-client.js` ve otomatik üretilen `maps/macka-online.bundle.js`.
+- Çevrim dışı antrenman değişmedi. Ağlı deneme modu `maps/macka.html?online=1` ile açılır ama **henüz kamusal bir WSS sunucusu yoktur**.
+- Şimdilik gerçek iki istemci ve sunucu otoritesi doğrulandı; 30 kullanıcı yük testi, hesap sistemi, kalıcı dünya/maç sonucu entegrasyonu, 7/24 dağıtım ve gerçek Android performansı henüz tamamlanmadı.
+
 ## ✅ Altyapı geliştirme — A1 tamamlanan çekirdek
 
 - [PostgreSQL dünya çekirdeği: uygulanmış kod, test kanıtı ve sınırlar](docs/world-core-a1-implementation.md)
