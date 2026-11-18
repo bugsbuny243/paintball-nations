@@ -7,6 +7,7 @@ on:
       - 'apps/game-backend/**'
       - 'packages/protocol/**'
       - 'tests/world-core.test.ts'
+      - 'tests/online-macka.test.ts'
       - 'package.json'
       - 'tsconfig.json'
       - '.github/workflows/world-core-ci.yml'
