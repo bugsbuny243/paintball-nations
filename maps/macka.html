@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+<title>Paintball Nations — Maçka OSM 3D Harita</title>
+<style>
+  :root{color-scheme:dark;font-family:system-ui,-apple-system,Segoe UI,sans-serif;}
+  *{box-sizing:border-box}
+  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#0e2430}
+  #viewport{display:block;width:100%;height:100%;touch-action:none;}
+  #top{position:fixed;top:0;left:0;right:0;padding:18px 18px 10px;
+    background:linear-gradient(#10212fdf,#10212f00);display:flex;justify-content:space-between;align-items:flex-start;gap:10px;z-index:4;pointer-events:none}
+  #top h1{font-size:18px;line-height:1.1;margin:0;color:#c6f8ff;text-shadow:0 2px 7px #000}
+  #top small{display:block;font-size:11px;font-weight:600;color:#d2e8e9;margin-top:6px;text-shadow:0 2px 5px #000}
+  #mode{pointer-events:auto;touch-action:manipulation;background:#e0fff5;color:#0c2830;border:0;border-radius:11px;
+    padding:11px 13px;font-size:12px;font-weight:800;box-shadow:0 3px 12px #0006}
+  #status{position:fixed;top:46%;left:50%;transform:translate(-50%,-50%);max-width:86%;min-width:220px;
+    background:#062a36ed;border:1px solid #99e5ec66;border-radius:18px;padding:18px 24px;text-align:center;font-size:14px;color:white;z-index:10}
+  #mobileControls{display:none;position:fixed;inset:0;z-index:3;pointer-events:none;}
+  #look{position:absolute;right:0;top:20%;width:63%;height:65%;touch-action:none;pointer-events:auto}
+  #joystick{position:absolute;left:24px;bottom:50px;width:126px;height:126px;border:2px solid #9df8f2a8;border-radius:50%;
+    background:#0f455b8a;pointer-events:auto;touch-action:none}
+  #stick{position:absolute;left:40px;top:40px;width:42px;height:42px;border-radius:50%;background:#c8faf5a8;border:2px solid #fff}
+  #crosshair{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:22px;color:#fff;text-shadow:0 1px 2px #000}
+  #footer{position:fixed;bottom:0;left:0;right:0;z-index:4;pointer-events:none;
+    display:flex;align-items:end;justify-content:space-between;gap:8px;padding:12px;background:linear-gradient(transparent,#142d36d8);font-size:10px;color:#e8f3f1}
+  #footer .license{pointer-events:auto;}
+  #footer a{color:#b1f5ed;text-decoration:underline}
+  #stats{background:#092f40c4;border:1px solid #ffffff21;padding:7px 8px;border-radius:9px;font-weight:700;max-width:60%}
+  .note{max-width:38%;text-align:right;line-height:1.3;}
+  @media(max-width:560px){
+    #top{padding:13px 11px 6px}
+    #top h1{font-size:14px}
+    #top small{font-size:10px}
+    #mode{font-size:10px;padding:8px}
+    #footer{padding:10px 8px;font-size:9px}
+    #stats{max-width:58%}
+    #joystick{left:12px;bottom:46px;width:104px;height:104px}
+    #stick{left:33px;top:33px;width:34px;height:34px}
+  }
+</style>
+</head>
+<body>
+<canvas id="viewport" aria-label="Maçka OSM 3D harita görüntüleyici"></canvas>
+<div id="top">
+  <div><h1>🌍 PAINTBALL NATIONS — MAÇKA</h1><small>Gerçek OSM verisi · İlk 3D alan prototipi</small></div>
+  <button type="button" id="mode">👣 Yürüyüşe geç</button>
+</div>
+<div id="status">🗺️ Maçka'nın gerçek yolları ve binaları yükleniyor…</div>
+<div id="mobileControls">
+  <div id="crosshair">+</div>
+  <div id="look" aria-label="Bakış alanı"></div>
+  <div id="joystick" aria-label="Yürüme joystick"><div id="stick"></div></div>
+</div>
+<div id="footer">
+  <div id="stats">OSM verileri okunuyor…</div>
+  <div class="note license">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a> · ODbL<br/>Yükseklikler kısmen tahminî. Arazi şimdilik düz.</div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/playcanvas@2.24.1/build/playcanvas.min.js"></script>
+<script src="./macka-viewer.js"></script>
+</body>
+</html>
