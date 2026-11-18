@@ -1,0 +1,57 @@
+name: Validate persistent world core A1
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/game-backend/**'
+      - 'packages/protocol/**'
+      - 'tests/world-core.test.ts'
+      - 'package.json'
+      - 'tsconfig.json'
+      - '.github/workflows/world-core-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pbn-world-core
+  cancel-in-progress: true
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: paintball_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d paintball_ci"
+          --health-interval 3s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/paintball_ci
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Typecheck protocol and backend
+        run: npm run world:check
+      - name: Apply PostgreSQL migrations twice to verify idempotency
+        run: |
+          npm run world:migrate
+          npm run world:migrate
+      - name: Run real PostgreSQL concurrency and API tests
+        run: npm run world:test
