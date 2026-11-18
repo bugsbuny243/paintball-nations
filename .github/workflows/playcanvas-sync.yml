@@ -1,0 +1,37 @@
+name: Sync Paintball Nations to PlayCanvas
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'playcanvas/paintballNations.js'
+      - 'scripts/sync-playcanvas.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: playcanvas-script-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    # Safeguard: no PlayCanvas writes before the user explicitly enables syncing.
+    if: ${{ vars.PLAYCANVAS_SYNC_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax
+        run: |
+          node --check playcanvas/paintballNations.js
+          node --check scripts/sync-playcanvas.mjs
+      - name: Upload script asset to PlayCanvas
+        run: node scripts/sync-playcanvas.mjs
+        env:
+          PLAYCANVAS_TOKEN: ${{ secrets.PLAYCANVAS_TOKEN }}
+          PLAYCANVAS_BRANCH_ID: ${{ vars.PLAYCANVAS_BRANCH_ID }}
