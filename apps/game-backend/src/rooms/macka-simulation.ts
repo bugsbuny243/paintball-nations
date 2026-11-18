@@ -34,7 +34,7 @@ function distanceToSegment(x:number,z:number,a:number[],b:number[]):number {
   const t=Math.max(0,Math.min(1,((x-a[0])*dx+(z-a[1])*dz)/(dx*dx+dz*dz||1)));
   return Math.hypot(x-(a[0]+dx*t),z-(a[1]+dz*t));
 }
-function insidePolygon(x:number,z,poly:number[][]):boolean {
+function insidePolygon(x:number,z:number,poly:number[][]):boolean {
   let inside=false;
   for(let i=0,j=poly.length-1;i<poly.length;j=i++) {
     const a=poly[i],b=poly[j];
