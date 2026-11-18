@@ -1,6 +1,15 @@
 # Paintball Nations 🎨
 
-**Yeni geliştirme kararı:** [Paintball Nations tam oyun planı — 15v15, ülkeler, OSM haritalar, hesap, kozmetik mağaza ve sunucu](docs/full-game-blueprint.md). Tüm yeni çalışmalar bu birleşik oyuna bağlı olacak; mevcut test prototipleri korunacaktır.
+## Ana ürün mimarisi V2 — tek kalıcı dünya
+
+**Yeni ana yön:** Paintball Nations yalnız 15v15 oda oyunu değil; ülke/klan üsleri, ekonomi, bölge fethi, cephelerde 15v15 FPS ve düşük nüfusta yaşayan bot dünyasıdır. OSM tabanlı gerçek yerleşimlerle tek mantıksal dünya tasarlanmıştır. Üretimde henüz uygulanmamış bileşenleri "tamamlandı" diye göstermiyoruz.
+
+- [🌍 Tek dünya sunucu ve veri mimarisi — V2](docs/world-architecture-v2.md)
+- [🧠 Ülke, üs, ekonomi, bot ve stratejik oyun sistemleri — V2](docs/world-game-systems-v2.md)
+- [🛠️ Altyapı kurulum sırası, testler ve tam yayın kabul planı — V2](docs/delivery-roadmap-v2.md)
+- [Eski oda tabanlı V1 planı — arşiv](docs/full-game-blueprint.md)
+
+**Durum:** Yukarıdaki V2 belgeleri tasarımdır, çalışan backend veya aktif sunucu değildir. Önce mevcut antrenman korunacak; V2 tek kod tabanı içinde geliştirilecektir.
 
 **Yeni: [OSM dünya haritası araştırması ve İstanbul sorgusu](docs/osm-map-research.md)**
 
