@@ -5,7 +5,7 @@
 </head><body><div id="load">🎨 Paintball Nations yükleniyor…<br/>İnternet bağlantısı gerekli.</div><canvas id="app"></canvas>
 <script src="https://cdn.jsdelivr.net/npm/playcanvas@2.24.1/build/playcanvas.min.js"></script>
 <script>
-/* Paintball Nations — FPS Training Arena v0.1
+/* Paintball Nations — FPS Training Arena v0.2
  * PlayCanvas classic script, engine 2.x. No external assets required.
  * Attach the `paintballNations` script to an empty Entity in a new scene.
  * This is a local training demo, not a networked 15v15 match.
@@ -34,6 +34,9 @@ function createPaintballNationsGame(app) {
     mat('dark', 0.06, 0.09, 0.14);
     mat('grass', 0.13, 0.34, 0.26);
     mat('turquoise', 0.10, 0.81, 0.73);
+    mat('steel', 0.32, 0.43, 0.51, 35);
+    mat('mint', 0.32, 0.97, 0.72);
+    mat('violet', 0.52, 0.30, 0.95);
     function primitive(type, name, x, y, z, sx, sy, sz, material, parent) {
         var e = new pc.Entity(name);
         e.addComponent('render', {type: type, material: material});
@@ -57,6 +60,9 @@ function createPaintballNationsGame(app) {
     var blockers = [];
     function cover(name, x, z, w, h, d, material) {
         box(name, x, h / 2, z, w, h, d, material);
+        box(name + ' top trim', x, h + 0.035, z, w + 0.07, 0.07, d + 0.07, mats.white);
+        box(name + ' front badge', x, h * 0.58, z + d / 2 + 0.032,
+            Math.min(0.9, w * 0.45), h * 0.31, 0.065, mats.dark);
         blockers.push({x:x, z:z, w:w, d:d, h:h});
     }
     cover('Left tall barricade', -8.5, 4.7, 3.2, 2.2, 1.3, mats.blue);
@@ -67,6 +73,42 @@ function createPaintballNationsGame(app) {
     cover('Middle back barricade', 0, -10.7, 3, 1.75, 1.25, mats.blue);
     cover('Rear left shield', -11.2, -11.8, 2.4, 1.5, 1.1, mats.orange);
     cover('Rear right shield', 11.2, -11.8, 2.4, 1.5, 1.1, mats.orange);
+    // Arena V0.2: painted turf, barrels, side signs and stadium trusses.
+    for (var stripe = -14; stripe <= 14; stripe += 7) {
+        box('Field stripe ' + stripe, stripe, 0.013, 0, 0.055, 0.025, 39, mats.steel);
+    }
+    [-12, 0, 12].forEach(function (z) {
+        box('Cross-field marking ' + z, 0, 0.014, z, 32.5, 0.025, 0.07, mats.steel);
+    });
+    for (var k = 0; k < 20; k++) {
+        var x = -15 + ((k * 37) % 31), z = -17 + ((k * 23) % 35);
+        primitive('sphere', 'Floor paint spot', x, 0.025, z,
+            0.19 + (k % 3) * 0.06, 0.024, 0.12 + (k % 4) * 0.05,
+            k % 2 ? mats.turquoise : mats.pink);
+    }
+    function barrel(name, x, z, color) {
+        primitive('cylinder', name, x, 0.56, z, 1.0, 1.12, 1.0, color);
+        primitive('cylinder', name + ' top cap', x, 1.14, z, 1.08, 0.09, 1.08, mats.dark);
+        primitive('cylinder', name + ' bright band', x, 0.67, z, 1.04, 0.13, 1.04, mats.white);
+        blockers.push({x:x, z:z, w:1.1, d:1.1, h:1.2});
+    }
+    barrel('Blue barrel L', -12, 9, mats.blue);
+    barrel('Blue barrel R', 12, 9, mats.blue);
+    barrel('Pink barrel L', -13, -1, mats.pink);
+    barrel('Pink barrel R', 13, -1, mats.pink);
+    barrel('Orange barrel mid', 0, -6.5, mats.orange);
+    [-18, 18].forEach(function(z) {
+        box('Overhead truss', 0, 4.8, z, 34, 0.18, 0.2, mats.steel);
+        for (var i = -15; i <= 15; i += 5) {
+            primitive('sphere', 'Arena floodlight', i, 4.68, z, 0.45, 0.24, 0.45, mats.mint);
+        }
+    });
+    for (var side = -1; side <= 1; side += 2) {
+        for (var j = -15; j <= 15; j += 6) {
+            box('Side wall highlight', side * 17.62, 1.55, j, 0.10, 2.25, 0.18, side < 0 ? mats.blue : mats.pink);
+            box('Side wall marker', side * 17.57, 2.55, j, 0.09, 0.12, 1.6, mats.mint);
+        }
+    }
     // Decorative columns and bright top caps.
     [-15, 15].forEach(function (x) {
         [-15, -5, 5, 15].forEach(function (z) {
@@ -85,6 +127,8 @@ function createPaintballNationsGame(app) {
     // Simple stylized paintball marker shown from the first-person camera.
     var marker = new pc.Entity('Free starter marker - cosmetic model');
     camera.addChild(marker);
+    marker.setLocalScale(0.69, 0.69, 0.69);
+    marker.setLocalPosition(0.21, -0.16, 0);
     box('Marker body',0.35,-0.32,-0.72,0.22,0.20,0.60,mats.deepBlue,marker);
     box('Marker grip',0.35,-0.48,-0.55,0.15,0.30,0.14,mats.dark,marker);
     var tube = primitive('cylinder','Marker tube',0.35,-0.29,-1.07,0.105,0.64,0.105,mats.turquoise,marker);
@@ -107,7 +151,13 @@ function createPaintballNationsGame(app) {
     });
     var px=0, pz=14.3, eye=1.68, yaw=0, pitch=0, t=0;
     var keys={}, stickX=0, stickY=0, pointerLook=null, joyPointer=null;
-    var score=0, hits=0, shots=0, timeLeft=120, cooldown=0, holdFire=false, ended=false;
+    var score=0, hits=0, shots=0, timeLeft=120, cooldown=0, holdFire=false, ended=false, kick=0;
+    var nations = [
+        {flag:'🇹🇷', name:'Türkiye'}, {flag:'🇧🇷', name:'Brezilya'},
+        {flag:'🇯🇵', name:'Japonya'}, {flag:'🇩🇪', name:'Almanya'},
+        {flag:'🇺🇸', name:'ABD'}, {flag:'🇬🇧', name:'İngiltere'}
+    ];
+    var nationIndex = 0;
     var effects=[], splats=[];
     camera.setPosition(px,eye,pz);
     var style = document.createElement('style');
@@ -115,6 +165,8 @@ function createPaintballNationsGame(app) {
       '#pb-root{position:fixed;inset:0;z-index:9000;pointer-events:none;color:#fff;font-family:system-ui,Arial,sans-serif;user-select:none;-webkit-user-select:none}'+
       '#pb-top{position:absolute;top:0;left:0;right:0;padding:12px 14px 10px;background:linear-gradient(#021421aa,transparent);display:flex;justify-content:space-between;align-items:flex-start;gap:10px;font-weight:800;text-shadow:0 1px 4px #000}'+
       '#pb-title{font-size:14px;color:#7af6ed;letter-spacing:0.8px}#pb-sub{font-size:10px;color:#d6f6f8;font-weight:600;margin-top:3px}'+
+      '#pb-nation{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:#052b41dd;color:#edfffe;border:1px solid #80f5ee88;border-radius:14px;padding:9px 12px;font-size:12px;font-weight:800;pointer-events:auto}'+
+      '#pb-rotate{display:none;position:absolute;top:92px;left:50%;transform:translateX(-50%);background:#0b2e3cc7;color:#e6ffff;padding:6px 11px;border-radius:10px;text-align:center;font-size:11px;max-width:78%;font-weight:700}'+
       '#pb-score{background:#002035b8;border:1px solid #ffffff55;border-radius:10px;padding:8px 12px;text-align:center;font-size:15px;white-space:nowrap}'+
       '#pb-score small{font-size:10px;font-weight:600;opacity:.9}'+
       '#pb-cross{position:absolute;left:50%;top:49%;transform:translate(-50%,-50%);font-size:30px;font-weight:300;line-height:1;color:white;text-shadow:0 0 3px black}'+
@@ -126,15 +178,22 @@ function createPaintballNationsGame(app) {
       '#pb-fire{position:absolute;right:23px;bottom:67px;border:3px solid #ffdfc2;border-radius:50%;width:94px;height:94px;background:#eb527cbb;color:white;font-weight:900;font-size:16px;pointer-events:auto;touch-action:none}'+
       '#pb-restart{position:absolute;top:68%;left:50%;transform:translateX(-50%);background:#20b4aa;color:white;border:0;border-radius:12px;padding:13px 20px;font-size:15px;font-weight:900;pointer-events:auto;display:none}'+
       '@media(pointer:fine){#pb-joy,#pb-fire,#pb-look{display:none}#pb-bottom{bottom:18px}}'+
+      '@media(orientation:portrait){#pb-rotate{display:block}#pb-nation{top:52px;font-size:11px;padding:6px 9px}}'+
       '@media(max-width:420px){#pb-title{font-size:12px}#pb-score{font-size:13px;padding:5px 7px}#pb-joy{width:105px;height:105px;left:14px;bottom:40px}#pb-thumb{left:34px;top:34px}#pb-fire{width:84px;height:84px;right:15px;bottom:52px}#pb-bottom{font-size:10px;bottom:9px}}';
     document.head.appendChild(style);
     var hud = document.createElement('div');
     hud.id='pb-root';
-    hud.innerHTML = '<div id="pb-top"><div><div id="pb-title">🎨 PAINTBALL NATIONS</div><div id="pb-sub">ÜCRETSİZ BAŞLANGIÇ • FPS ANTRENMAN</div></div><div id="pb-score">🔵 <span id="pb-points">0</span> : <span id="pb-targets">10</span> 🔴<div><small>⏱ <span id="pb-time">02:00</span> • İSABET <span id="pb-accuracy">0</span>%</small></div></div></div><div id="pb-cross">+</div><div id="pb-message">Hedefleri boya! +100 puan</div><div id="pb-look"></div><div id="pb-joy"><div id="pb-thumb"></div></div><button id="pb-fire" type="button">BOYA!</button><button id="pb-restart" type="button">TEKRAR OYNA</button><div id="pb-bottom">SOL: HAREKET • SAĞ: BAKIŞ • BOYA: ATIŞ</div>';
+    hud.innerHTML = '<div id="pb-top"><div><div id="pb-title">🎨 PAINTBALL NATIONS <small>V0.2</small></div><div id="pb-sub">ÜCRETSİZ BAŞLANGIÇ • FPS ANTRENMAN</div></div><div id="pb-score">PUAN <span id="pb-points">0</span><div><small>HEDEF <span id="pb-targets">10</span> • ⏱ <span id="pb-time">02:00</span> • İSABET <span id="pb-accuracy">0</span>%</small></div></div></div><button id="pb-nation" type="button">🇹🇷 Türkiye ▾</button><div id="pb-rotate">📱 Daha geniş oyun alanı için telefonu yatay çevir</div><div id="pb-cross">+</div><div id="pb-message">Hedefleri boya! +100 puan</div><div id="pb-look"></div><div id="pb-joy"><div id="pb-thumb"></div></div><button id="pb-fire" type="button">BOYA!</button><button id="pb-restart" type="button">TEKRAR OYNA</button><div id="pb-bottom">SOL: HAREKET • SAĞ: BAKIŞ • BOYA: ATIŞ</div>';
     document.body.appendChild(hud);
     function $id(id){return hud.querySelector('#'+id);}
     var joy=$id('pb-joy'), thumb=$id('pb-thumb'), look=$id('pb-look'), fire=$id('pb-fire');
     var msg=$id('pb-message');
+    $id('pb-nation').addEventListener('click', function(){
+        nationIndex = (nationIndex + 1) % nations.length;
+        var nation = nations[nationIndex];
+        $id('pb-nation').textContent = nation.flag + ' ' + nation.name + ' ▾';
+        showMessage(nation.flag + ' ' + nation.name + ' seçildi • antrenman modu', 1.4);
+    });
     var messageUntil=3;
     function showMessage(text, seconds){msg.textContent=text;messageUntil=t+(seconds||0.7);msg.style.display='block';}
     function moveThumb(ev) {
@@ -198,12 +257,19 @@ function createPaintballNationsGame(app) {
         return far>=0?Math.max(near,0):Infinity;
     }
     function splat(x,y,z){
-        var s=primitive('sphere','Paint splash',x,y,z,0.34,0.23,0.34,Math.random()>.5?mats.turquoise:mats.yellow);
-        splats.push({e:s,die:t+2.5});
+        var color = Math.random() > .5 ? mats.turquoise : mats.yellow;
+        var s = primitive('sphere','Paint splash',x,y,z,0.29,0.21,0.29,color);
+        splats.push({e:s,die:t+2.3});
+        for (var i=0; i<4; i++) {
+            var a = i * Math.PI * 0.5 + Math.random() * 0.4;
+            var d = 0.18 + Math.random() * 0.28;
+            var dot = primitive('sphere','Paint droplet',x+Math.cos(a)*d,y+(Math.random()-.5)*0.18,z+Math.sin(a)*d,0.09,0.09,0.09,color);
+            splats.push({e:dot,die:t+2.1});
+        }
     }
     function shoot(){
         if(ended||cooldown>0)return;
-        cooldown=0.24;shots++;
+        cooldown=0.24;shots++;kick=1;
         var dir=camera.forward.clone().normalize();
         var origin=camera.getPosition().clone();
         var best=45,hit=null;
@@ -255,6 +321,7 @@ function createPaintballNationsGame(app) {
             if(timeLeft<=0){timeLeft=0;ended=true;holdFire=false;showMessage('TUR BİTTİ — SKORUN: '+score,1000);$id('pb-restart').style.display='block';}
         }
         cooldown=Math.max(0,cooldown-dt);
+        kick=Math.max(0,kick-dt*7);
         if(messageUntil<t)msg.style.display='none';
         if(!ended){
             var f=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0)-stickY;
@@ -269,7 +336,7 @@ function createPaintballNationsGame(app) {
             if(canMove(px,pz+dz))pz+=dz;
             camera.setLocalPosition(px,eye,pz);
             camera.setLocalEulerAngles(pitch,yaw,0);
-            marker.setLocalPosition(0,Math.sin(t*9)*0.006*(mag>0?1:0),0);
+            marker.setLocalPosition(0.21,-0.16+Math.sin(t*9)*0.007*(mag>0?1:0)-kick*0.028,kick*0.09);
             if((holdFire||keys.Space)&&cooldown<=0)shoot();
             for(var j=0;j<targets.length;j++){
                 var a=targets[j];
