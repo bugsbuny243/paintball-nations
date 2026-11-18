@@ -2,14 +2,16 @@
 
 **Mobil oynanabilir önizleme:** https://raw.githack.com/bugsbuny243/paintball-nations/main/index.html
 
-Bu, GitHub deposundaki tek dosyalık web demosunun üçüncü taraf üzerinden sunulan geliştirme önizlemesidir. Bazı tarayıcılarda güvenlik onay sayfası gösterebilir. Kalıcı barındırma için GitHub Pages gerekir; Pages henüz etkin olmadığı için ilk dağıtım görevi tamamlanmadı.
+Bu, GitHub deposundaki tek dosyalık web demosunun üçüncü taraf üzerinden sunulan geliştirme önizlemesidir. Bazı tarayıcılarda güvenlik onay sayfası gösterebilir. GitHub Pages henüz etkin değil; otomatik etkinleştirme denemesi GitHub token yetkisi nedeniyle başarısız oldu. Pages aktif olduğunda Actions variable `GITHUB_PAGES_ENABLED=true` ayarlanıp dağıtım kullanılabilir.
 
 PlayCanvas üzerinde **FPS 3D paintball antrenman prototipi**.
 
 - PlayCanvas proje ID: `1650317`
 - PlayCanvas sahne ID: `2659278`
-- Durum: **V0.1**, çevrim dışı antrenman sahnesi; gerçek 15'e 15 çevrim içi oyun henüz yok.
+- Durum: **V0.2**, çevrim dışı antrenman sahnesi; gerçek 15'e 15 çevrim içi oyun henüz yok.
 - Oyun kodu: [playcanvas/paintballNations.js](playcanvas/paintballNations.js)
+- V0.2: Daha dolu arena, daha küçük FPS atıcısı, boya parçacıkları, örnek ülke seçimi ve yatay ekran uyarısı.
+- Ülke seçimi şimdilik sadece yerel antrenman arayüzüdür; gerçek takım eşleşmesi değildir.
 
 ## GitHub → PlayCanvas otomatik script aktarımı
 
