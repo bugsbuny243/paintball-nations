@@ -1,0 +1,50 @@
+name: Validate A2 Maçka online multiplayer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/game-backend/src/online-server.ts'
+      - 'apps/game-backend/src/rooms/**'
+      - 'maps/macka-online-client.js'
+      - 'maps/macka-viewer.js'
+      - 'maps/macka.html'
+      - 'tests/online-macka.test.ts'
+      - 'package.json'
+      - 'tsconfig.json'
+      - '.github/workflows/online-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pbn-online-macka
+  cancel-in-progress: true
+
+jobs:
+  network:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install packages
+        run: npm install --no-audit --no-fund
+      - name: Typecheck world and online server
+        run: npm run world:check
+      - name: Build browser Colyseus client
+        run: npm run online:build
+      - name: Test two real SDK connections and server authority
+        run: npm run online:test
+      - name: Commit browser bundle after tests pass
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add maps/macka-online.bundle.js
+          if ! git diff --cached --quiet; then
+            git commit -m "Build tested Maçka multiplayer browser bundle [skip ci]"
+            git push origin HEAD:main
+          fi
