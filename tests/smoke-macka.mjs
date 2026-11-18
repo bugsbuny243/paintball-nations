@@ -11,7 +11,15 @@ const page = await browser.newPage({ viewport: { width: 960, height: 540 }, devi
 const errors = [];
 page.on('pageerror', error => errors.push(error.message));
 page.on('console', msg => {
-    if (msg.type() === 'error') errors.push(msg.text());
+    if (msg.type() !== 'error') return;
+    const url = msg.location()?.url || '';
+    if (url.endsWith('/favicon.ico')) return;
+    errors.push(msg.text() + (url ? ' @ ' + url : ''));
+});
+page.on('response', response => {
+    if (response.status() >= 400 && !response.url().endsWith('/favicon.ico')) {
+        errors.push('HTTP ' + response.status() + ': ' + response.url());
+    }
 });
 
 try {
@@ -35,6 +43,8 @@ try {
     }
     await page.locator('#mp-fire').click({ timeout: 8000 });
     await page.waitForTimeout(300);
+    const shotCount = await page.locator('#macka-paintball-hud').getAttribute('data-shots');
+    if (shotCount !== '1') throw new Error('Paintball trigger did not fire: shots=' + shotCount);
     if (errors.length) throw new Error('Browser errors: ' + errors.join('\n'));
     console.log('Maçka OSM FPS smoke test passed:', init);
 } finally {
