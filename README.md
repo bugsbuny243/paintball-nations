@@ -4,7 +4,11 @@
 
 **Mobil oynanabilir önizleme:** https://raw.githack.com/bugsbuny243/paintball-nations/main/index.html
 
-**Yeni İstanbul Maçka 3D OSM harita prototipi:** https://raw.githack.com/bugsbuny243/paintball-nations/main/maps/macka.html
+**🎮 Maçka OSM Paintball FPS antrenmanı:** https://raw.githack.com/bugsbuny243/paintball-nations/main/maps/macka.html?play=1
+
+**🗺️ Maçka OSM kuşbakışı harita incelemesi:** https://raw.githack.com/bugsbuny243/paintball-nations/main/maps/macka.html
+
+Oynanabilir harita modunda 15 kırmızı boya hedefi, 14 mavi antrenman maketi + oyuncu, paintball bariyerleri, 2 dakika 30 saniyelik tur, skor sistemi, bina ve bariyer çarpışmaları ve mobil FPS kontrolleri vardır. **Bu yalnızca çevrim dışı bir antrenman oyunudur, gerçek 15v15 çevrim içi maç değildir.** Bina oturumları/yollar gerçek OSM'dendir, oyun objeleri kurgusaldır. Yükseklikler tahminî olabilir.
 
 Harita için [gerçek OSM kaynak verisi](maps/istanbul-macka.json), [PlayCanvas 3D harita kodu](maps/macka-viewer.js) ve [GitHub doğrulama sonucu](https://github.com/bugsbuny243/paintball-nations/actions/workflows/check-osm-viewer.yml) bulunur. Kuşbakışı ve mobil yürüyüş modları eklendi. Bu ayrı bir harita görüntüleyicisidir; ana FPS maçına entegrasyon ve gerçek zamanlı oyuncu sistemi henüz tamamlanmadı.
 
