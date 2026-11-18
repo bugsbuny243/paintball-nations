@@ -1,0 +1,50 @@
+name: Import Maçka OpenStreetMap data
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - scripts/build_osm_map.py
+      - .github/workflows/import-osm.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: osm-macka-import
+  cancel-in-progress: false
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Download small area from OSM API
+        run: |
+          curl --fail --show-error --silent --location --retry 3 --retry-all-errors \
+            --connect-timeout 15 --max-time 120 \
+            --user-agent 'PaintballNations-OSM-Macka/0.1 (github.com/bugsbuny243/paintball-nations)' \
+            --header 'Accept: application/xml' \
+            'https://api.openstreetmap.org/api/0.6/map?bbox=28.9917%2C41.0428%2C28.9957%2C41.0457' \
+            --output /tmp/istanbul-macka.osm
+          test -s /tmp/istanbul-macka.osm
+      - name: Convert OSM into game-ready JSON
+        run: |
+          python3 scripts/build_osm_map.py /tmp/istanbul-macka.osm maps/istanbul-macka.json
+          python3 -m json.tool maps/istanbul-macka.json > /dev/null
+      - name: Publish derived map in GitHub
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add maps/istanbul-macka.json
+          if git diff --cached --quiet; then
+            echo 'No map changes.'
+          else
+            git commit -m 'Import OpenStreetMap geometry for Maçka prototype'
+            git push origin HEAD:main
+          fi
