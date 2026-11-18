@@ -1,5 +1,7 @@
 # Paintball Nations 🎨
 
+**Yeni: [OSM dünya haritası araştırması ve İstanbul sorgusu](docs/osm-map-research.md)**
+
 **Mobil oynanabilir önizleme:** https://raw.githack.com/bugsbuny243/paintball-nations/main/index.html
 
 Bu, GitHub deposundaki tek dosyalık web demosunun üçüncü taraf üzerinden sunulan geliştirme önizlemesidir. Bazı tarayıcılarda güvenlik onay sayfası gösterebilir. GitHub Pages henüz etkin değil; otomatik etkinleştirme denemesi GitHub token yetkisi nedeniyle başarısız oldu. Pages aktif olduğunda Actions variable `GITHUB_PAGES_ENABLED=true` ayarlanıp dağıtım kullanılabilir.
