@@ -256,7 +256,12 @@
             getMode:function(){return bird;},
             getPlayerPosition:function(){return {x:px,z:pz};},
             setPlayerPosition:function(x,z){px=x;pz=z;place();},
-            registerMoveGuard:function(fn){moveGuard=fn;}
+            registerMoveGuard:function(fn){moveGuard=fn;},
+            adjustLook:function(dx,dy){
+                yaw -= 0.18 * dx;
+                pitch = Math.max(-60, Math.min(60, pitch - 0.14 * dy));
+                place();
+            }
         };
         window.paintballMacka = shared;
         window.dispatchEvent(new CustomEvent('paintball-macka-ready',{detail:shared}));
