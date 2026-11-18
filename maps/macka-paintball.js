@@ -184,6 +184,9 @@
         var fire=$('#mp-fire'), restart=$('#mp-restart'),message=$('#mp-flash'), messageUntil=0;
         function announce(msg,seconds){message.textContent=msg;message.style.opacity='1';messageUntil=tick+(seconds||.85);}
         function scoreboard() {
+            hud.dataset.shots=String(shots);
+            hud.dataset.redCount=String(enemies.length);
+            hud.dataset.blueTeammates=String(friends.length);
             $('#mp-blue').textContent=hits;
             $('#mp-red').textContent=enemies.filter(function(e){return e.active;}).length;
             $('#mp-points').textContent=score;
