@@ -1,0 +1,25 @@
+{
+  "name": "paintball-nations",
+  "version": "0.4.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "world:migrate": "tsx apps/game-backend/src/migrate.ts",
+    "world:serve": "tsx apps/game-backend/src/server.ts",
+    "world:check": "tsc --noEmit",
+    "world:test": "tsx --test tests/world-core.test.ts",
+    "world:verify": "npm run world:check && npm run world:test"
+  },
+  "dependencies": {
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "@types/pg": "^8.15.5",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
