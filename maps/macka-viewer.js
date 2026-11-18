@@ -194,6 +194,7 @@
         var camera=new pc.Entity('Map viewer');
         camera.addComponent('camera',{fov:66,nearClip:0.1,farClip:1600,clearColor:new pc.Color(0.55,0.75,0.87)});
         app.root.addChild(camera);
+        var moveGuard=null;
         var bird=true,px=0,pz=120,yaw=0,pitch=0,keys={},lookId=null,
             stickId=null,stickX=0,stickY=0,stick=document.getElementById('stick'),
             joy=document.getElementById('joystick'),look=document.getElementById('look');
@@ -240,13 +241,25 @@
             var r=(keys.KeyD?1:0)-(keys.KeyA?1:0)+stickX;
             var size=Math.hypot(f,r);if(size>1){f/=size;r/=size;}
             var angle=yaw*Math.PI/180,step=Math.min(dt,0.05)*13;
-            px+=(-Math.sin(angle)*f+Math.cos(angle)*r)*step;
-            pz+=(-Math.cos(angle)*f-Math.sin(angle)*r)*step;
-            px=Math.max(-165,Math.min(165,px));pz=Math.max(-155,Math.min(155,pz));
+            var nx=Math.max(-165,Math.min(165,px+(-Math.sin(angle)*f+Math.cos(angle)*r)*step));
+            var nz=Math.max(-155,Math.min(155,pz+(-Math.cos(angle)*f-Math.sin(angle)*r)*step));
+            if(!moveGuard || moveGuard(nx,pz)) px=nx;
+            if(!moveGuard || moveGuard(px,nz)) pz=nz;
             place();
         });
         window.addEventListener('resize',function(){app.resizeCanvas();});
         setMode(true);
+        // Optional game extension. The OSM geometry stays in this map viewer,
+        // while paintball gameplay remains a separate, non-destructive module.
+        var shared = {
+            app:app, camera:camera, geo:geo, box:box, setMode:setMode,
+            getMode:function(){return bird;},
+            getPlayerPosition:function(){return {x:px,z:pz};},
+            setPlayerPosition:function(x,z){px=x;pz=z;place();},
+            registerMoveGuard:function(fn){moveGuard=fn;}
+        };
+        window.paintballMacka = shared;
+        window.dispatchEvent(new CustomEvent('paintball-macka-ready',{detail:shared}));
         status.style.display='none';
     } catch(e) {fail(e);}
 })();
