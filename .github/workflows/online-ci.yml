@@ -10,6 +10,7 @@ on:
       - 'maps/macka-viewer.js'
       - 'maps/macka.html'
       - 'tests/online-macka.test.ts'
+      - 'tests/smoke-online-macka.mjs'
       - 'package.json'
       - 'tsconfig.json'
       - '.github/workflows/online-ci.yml'
@@ -39,6 +40,19 @@ jobs:
         run: npm run online:build
       - name: Test two real SDK connections and server authority
         run: npm run online:test
+      - name: Install lightweight browser automation
+        run: npm install --no-save playwright
+      - name: Test 2 real PlayCanvas browser clients locally
+        run: |
+          export CHROME_BIN="$(command -v google-chrome-stable || command -v google-chrome || command -v chromium)"
+          test -n "$CHROME_BIN"
+          python3 -m http.server 8765 --bind 127.0.0.1 > /tmp/pbn-web.log 2>&1 &
+          NODE_ENV=test npm run online:serve > /tmp/pbn-server.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -s --max-time 1 -o /dev/null http://127.0.0.1:2567/; then break; fi
+            sleep 1
+          done
+          node tests/smoke-online-macka.mjs
       - name: Commit browser bundle after tests pass
         run: |
           git config user.name "github-actions[bot]"
