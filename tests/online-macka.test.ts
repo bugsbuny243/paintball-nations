@@ -6,7 +6,7 @@ import {test} from 'node:test';
 import {boot} from '@colyseus/testing';
 import {setTimeout as sleep} from 'node:timers/promises';
 import {onlineServer} from '../apps/game-backend/src/online-server.ts';
-import {MackaSimulation,normalizeInput} from '../apps/game-backend/src/rooms/macka-simulation.ts';
+import {MackaSimulation,normalizeInput,type BattleSnapshot} from '../apps/game-backend/src/rooms/macka-simulation.ts';
 import {readFileSync} from 'node:fs';
 const geo=JSON.parse(readFileSync(new URL('../maps/istanbul-macka.json',import.meta.url),'utf8')) as {buildings:{p:number[][]}[]};
 
@@ -18,7 +18,7 @@ test('A2 two human sessions join one authoritative Colyseus Maçka room',async()
     const red=await testServer.connectTo(room);
     assert.equal(blue.roomId,red.roomId);
     assert.notEqual(blue.sessionId,red.sessionId);
-    const before=room.game.snapshot();
+    const before=room.game.snapshot() as BattleSnapshot;
     assert.equal(before.playerCounts.blue,1);
     assert.equal(before.playerCounts.red,1);
     assert.equal(before.bots,0);
@@ -33,7 +33,7 @@ test('A2 two human sessions join one authoritative Colyseus Maçka room',async()
     red.onMessage('snapshot',(msg:any)=>{latest=msg;});
     blue.send('input',{seq:1,mx:0,mz:1,yaw:0,pitch:0,fire:false});
     await sleep(220);
-    const current=room.game.snapshot();
+    const current=room.game.snapshot() as BattleSnapshot;
     assert.ok(current.players.find(p=>p.id===blue.sessionId)!.z<start.z);
     assert.ok(latest && latest.players.length===2);
     assert.equal(latest.mapId,'TR-MACKA');
@@ -46,7 +46,7 @@ test('A2 two human sessions join one authoritative Colyseus Maçka room',async()
     blue.send('input',{seq:2,mx:0,mz:0,yaw:0,pitch:0,fire:true,
        x:999999,z:999999,score:999999,team:'red'});
     await sleep(160);
-    const hit=room.game.snapshot();
+    const hit=room.game.snapshot() as BattleSnapshot;
     const after=hit.players.find(p=>p.id===blue.sessionId)!;
     assert.ok(Math.abs(after.x)<96 && Math.abs(after.z)<124);
     assert.equal(after.team,'blue');
