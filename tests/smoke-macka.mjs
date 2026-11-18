@@ -4,6 +4,7 @@ import { chromium } from 'playwright';
 
 const browser = await chromium.launch({
     headless: true,
+    executablePath: process.env.CHROME_BIN || undefined,
     args: ['--enable-webgl', '--use-gl=angle', '--use-angle=swiftshader', '--disable-gpu-sandbox']
 });
 const page = await browser.newPage({ viewport: { width: 960, height: 540 }, deviceScaleFactor: 1 });
@@ -21,7 +22,7 @@ try {
         document.querySelector('#macka-paintball-hud') &&
         document.querySelector('#mp-red')?.textContent.trim() === '15' &&
         document.querySelector('#status')?.style.display === 'none',
-        { timeout: 35000 });
+        null, { timeout: 35000 });
     const init = await page.evaluate(() => ({
         map: !!window.paintballMacka,
         red: document.querySelector('#mp-red')?.textContent,
