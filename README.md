@@ -1,5 +1,13 @@
 # Paintball Nations 🎨
 
+## ✅ Altyapı geliştirme — A1 tamamlanan çekirdek
+
+- [PostgreSQL dünya çekirdeği: uygulanmış kod, test kanıtı ve sınırlar](docs/world-core-a1-implementation.md)
+- [9/9 geçen PostgreSQL CI testi](https://github.com/bugsbuny243/paintball-nations/actions/runs/44369060443)
+- Kod: apps/game-backend, packages/protocol, tests/world-core.test.ts
+- Gerçekleşen: idempotent üs yükseltme, kaynak defteri, sınırlı offline üretim hesabı, sürümlü dünya snapshot, operatör korumalı HTTP API.
+- Henüz yapılmayan: 24/7 dağıtım, gerçek oyuncu oturumu, Colyseus 15v15, bot orduları ve PlayCanvas canlı bağlantısı. Mevcut V0.3 FPS antrenmanı korunuyor.
+
 ## Ana ürün mimarisi V2 — tek kalıcı dünya
 
 **Yeni ana yön:** Paintball Nations yalnız 15v15 oda oyunu değil; ülke/klan üsleri, ekonomi, bölge fethi, cephelerde 15v15 FPS ve düşük nüfusta yaşayan bot dünyasıdır. OSM tabanlı gerçek yerleşimlerle tek mantıksal dünya tasarlanmıştır. Üretimde henüz uygulanmamış bileşenleri "tamamlandı" diye göstermiyoruz.
