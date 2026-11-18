@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
     paths:
+      - maps/macka-paintball.js
+      - tests/smoke-macka.mjs
       - maps/macka-viewer.js
       - maps/macka.html
       - maps/istanbul-macka.json
@@ -16,14 +18,17 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 4
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
       - name: Validate JavaScript syntax
-        run: node --check maps/macka-viewer.js
+        run: |
+          node --check maps/macka-viewer.js
+          node --check maps/macka-paintball.js
+          node --check tests/smoke-macka.mjs
       - name: Verify actual OSM-derived data, counts and attribution
         run: |
           python3 - <<'PY'
@@ -46,3 +51,14 @@ jobs:
           grep -F 'playcanvas@2.24.1' maps/macka.html
           grep -F 'macka-viewer.js' maps/macka.html
           grep -F 'istanbul-macka.json' maps/macka-viewer.js
+          grep -F 'macka-paintball.js' maps/macka.html
+          grep -F 'macka.html?play=1' index.html
+      - name: Install temporary browser test dependencies
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Smoke-test paintball map in Chromium
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 > /tmp/paintball-http.log 2>&1 &
+          sleep 2
+          node tests/smoke-macka.mjs
