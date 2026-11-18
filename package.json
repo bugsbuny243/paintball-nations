@@ -1,6 +1,6 @@
 {
   "name": "paintball-nations",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -11,15 +11,23 @@
     "world:serve": "tsx apps/game-backend/src/server.ts",
     "world:check": "tsc --noEmit",
     "world:test": "tsx --test tests/world-core.test.ts",
-    "world:verify": "npm run world:check && npm run world:test"
+    "world:verify": "npm run world:check && npm run world:test",
+    "online:serve": "tsx apps/game-backend/src/online-server.ts",
+    "online:build": "esbuild maps/macka-online-client.js --bundle --minify --format=iife --platform=browser --target=es2020 --outfile=maps/macka-online.bundle.js",
+    "online:test": "tsx --test tests/online-macka.test.ts",
+    "online:verify": "npm run world:check && npm run online:build && npm run online:test"
   },
   "dependencies": {
-    "pg": "^8.23.1"
+    "pg": "^8.23.1",
+    "colyseus": "^0.18.0",
+    "@colyseus/sdk": "^0.18.0"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",
     "@types/pg": "^8.15.5",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "esbuild": "^0.25.12",
+    "@colyseus/testing": "^0.18.2"
   }
 }
