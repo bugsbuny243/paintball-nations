@@ -4,6 +4,10 @@
 
 **Mobil oynanabilir önizleme:** https://raw.githack.com/bugsbuny243/paintball-nations/main/index.html
 
+**Yeni İstanbul Maçka 3D OSM harita prototipi:** https://raw.githack.com/bugsbuny243/paintball-nations/main/maps/macka.html
+
+Harita için [gerçek OSM kaynak verisi](maps/istanbul-macka.json), [PlayCanvas 3D harita kodu](maps/macka-viewer.js) ve [GitHub doğrulama sonucu](https://github.com/bugsbuny243/paintball-nations/actions/workflows/check-osm-viewer.yml) bulunur. Kuşbakışı ve mobil yürüyüş modları eklendi. Bu ayrı bir harita görüntüleyicisidir; ana FPS maçına entegrasyon ve gerçek zamanlı oyuncu sistemi henüz tamamlanmadı.
+
 Bu, GitHub deposundaki tek dosyalık web demosunun üçüncü taraf üzerinden sunulan geliştirme önizlemesidir. Bazı tarayıcılarda güvenlik onay sayfası gösterebilir. GitHub Pages henüz etkin değil; otomatik etkinleştirme denemesi GitHub token yetkisi nedeniyle başarısız oldu. Pages aktif olduğunda Actions variable `GITHUB_PAGES_ENABLED=true` ayarlanıp dağıtım kullanılabilir.
 
 PlayCanvas üzerinde **FPS 3D paintball antrenman prototipi**.
