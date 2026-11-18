@@ -7,7 +7,8 @@ import {boot} from '@colyseus/testing';
 import {setTimeout as sleep} from 'node:timers/promises';
 import {onlineServer} from '../apps/game-backend/src/online-server.ts';
 import {MackaSimulation,normalizeInput} from '../apps/game-backend/src/rooms/macka-simulation.ts';
-import geo from '../maps/istanbul-macka.json' with {type:'json'};
+import {readFileSync} from 'node:fs';
+const geo=JSON.parse(readFileSync(new URL('../maps/istanbul-macka.json',import.meta.url),'utf8')) as {buildings:{p:number[][]}[]};
 
 test('A2 two human sessions join one authoritative Colyseus Maçka room',async()=>{
   const testServer=await boot(onlineServer);
