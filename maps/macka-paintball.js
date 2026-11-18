@@ -13,6 +13,8 @@
     function mount(ev) {
         var map = ev.detail;
         if (!map || !map.app || !map.geo) return;
+        var launchLink=document.getElementById('start-game');
+        if(launchLink)launchLink.hidden=true;
         var app = map.app, camera = map.camera, boxes = [],
             cover = [], enemies = [], friends = [], particles = [];
         var score = 0, shots = 0, hits = 0, clock = 150,
@@ -301,7 +303,6 @@
                 map.adjustLook(ev.movementX,ev.movementY);
             }
         });
-        var player0=map.getPlayerPosition();
         map.setMode(false);
         scoreboard();
         announce('MAÇKA ARENASINA HOŞ GELDİN!',2);
