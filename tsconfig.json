@@ -18,6 +18,7 @@
   "include": [
     "apps/game-backend/src/**/*.ts",
     "packages/protocol/src/**/*.ts",
-    "tests/world-core.test.ts"
+    "tests/world-core.test.ts",
+    "tests/online-macka.test.ts"
   ]
 }
