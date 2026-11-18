@@ -34,4 +34,3 @@ jobs:
         run: node scripts/sync-playcanvas.mjs
         env:
           PLAYCANVAS_TOKEN: ${{ secrets.PLAYCANVAS_TOKEN }}
-          PLAYCANVAS_BRANCH_ID: ${{ vars.PLAYCANVAS_BRANCH_ID }}
