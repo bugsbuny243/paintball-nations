@@ -19,6 +19,8 @@ concurrency:
 
 jobs:
   deploy:
+    # Pages is not enabled on this repository yet; skip instead of failing.
+    if: ${{ vars.GITHUB_PAGES_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     environment:
       name: github-pages
