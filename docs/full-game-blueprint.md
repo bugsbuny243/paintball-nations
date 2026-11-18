@@ -1,5 +1,7 @@
 # Paintball Nations — Tam Oyun Ürün ve Mimari Planı (v1)
 
+> ⚠️ **ARŞİV / V1:** Bu tasarım, yeni kalıcı dünya hedefinden önce hazırlanmış 15v15 oda odaklı ilk plandır. Güncel kararlar için [V2 tek dünya mimarisini](world-architecture-v2.md), [oyun sistemlerini](world-game-systems-v2.md) ve [uygulama planını](delivery-roadmap-v2.md) esas alın. Bu belgedeki oda-merkezli yapı artık ana ürünün bütünü değildir.
+
 > **Durum:** Hedef ürün planı ve önerilen teknik kararlar. Bu belge, burada tanımlanan özelliklerin uygulanmış olduğu anlamına **gelmez**.
 > **Temel karar:** Dağıtık, birbirinden kopuk gösterimler değil; tek oyun, tek kod tabanı, ortak veri modeli, bütünleşik test ve tek sürüm hattı.
 > **İlk hedef platform:** Android Chrome / mobil tarayıcı. Oyuncu arayüzü PlayCanvas. Fiziksel bilgisayar veya sürekli pahalı bulut PC gerekli olmamalı.
