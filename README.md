@@ -1,5 +1,9 @@
 # Paintball Nations 🎨
 
+**Mobil oynanabilir önizleme:** https://raw.githack.com/bugsbuny243/paintball-nations/main/index.html
+
+Bu, GitHub deposundaki tek dosyalık web demosunun üçüncü taraf üzerinden sunulan geliştirme önizlemesidir. Bazı tarayıcılarda güvenlik onay sayfası gösterebilir. Kalıcı barındırma için GitHub Pages gerekir; Pages henüz etkin olmadığı için ilk dağıtım görevi tamamlanmadı.
+
 PlayCanvas üzerinde **FPS 3D paintball antrenman prototipi**.
 
 - PlayCanvas proje ID: `1650317`
