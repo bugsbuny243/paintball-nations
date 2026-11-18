@@ -1,5 +1,7 @@
 # Paintball Nations 🎨
 
+**Yeni geliştirme kararı:** [Paintball Nations tam oyun planı — 15v15, ülkeler, OSM haritalar, hesap, kozmetik mağaza ve sunucu](docs/full-game-blueprint.md). Tüm yeni çalışmalar bu birleşik oyuna bağlı olacak; mevcut test prototipleri korunacaktır.
+
 **Yeni: [OSM dünya haritası araştırması ve İstanbul sorgusu](docs/osm-map-research.md)**
 
 **Mobil oynanabilir önizleme:** https://raw.githack.com/bugsbuny243/paintball-nations/main/index.html
