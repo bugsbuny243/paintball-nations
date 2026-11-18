@@ -117,7 +117,7 @@ test('A1 persistent world: durable transactions, idempotency and HTTP gateway',a
       try {
         const world=await fetch(base+'/api/v1/world');
         assert.equal(world.status,200);
-        assert.equal((await world.json()).worldVersion,3);
+        assert.equal(((await world.json()) as {worldVersion:number}).worldVersion,3);
         const privateBalance=await fetch(base+'/api/v1/factions/TR/balances');
         assert.equal(privateBalance.status,401);
         const intent={operationId:'a1-api-upgrade-00001',sectorId:'TR-MACKA',
@@ -131,8 +131,8 @@ test('A1 persistent world: durable transactions, idempotency and HTTP gateway',a
             authorization:'Bearer '+token},body:JSON.stringify(intent)
         });
         assert.equal(accepted.status,200);
-        assert.equal((await accepted.json()).level,1);
-        assert.equal((await (await fetch(base+'/api/v1/world')).json()).worldVersion,4);
+        assert.equal(((await accepted.json()) as {level:number}).level,1);
+        assert.equal(((await (await fetch(base+'/api/v1/world')).json()) as {worldVersion:number}).worldVersion,4);
       } finally {await new Promise<void>((resolve,reject)=>server.close(e=>e?reject(e):resolve()));}
     });
   } finally {await pool.end();}
