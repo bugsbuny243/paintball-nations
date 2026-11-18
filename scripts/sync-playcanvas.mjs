@@ -4,10 +4,8 @@ const PROJECT_ID = '1650317';
 const SCRIPT_NAME = 'paintballNations.js';
 const API_BASE = 'https://playcanvas.com/api';
 const token = process.env.PLAYCANVAS_TOKEN?.trim();
-const branchId = process.env.PLAYCANVAS_BRANCH_ID?.trim();
-
-if (!token || !branchId) {
-  throw new Error('GitHub: PLAYCANVAS_TOKEN secret ve PLAYCANVAS_BRANCH_ID variable ayarlanmalı.');
+if (!token) {
+  throw new Error('GitHub: PLAYCANVAS_TOKEN secret ayarlanmalı.');
 }
 
 async function api(path, options = {}) {
@@ -21,6 +19,24 @@ async function api(path, options = {}) {
   }
   return response.json();
 }
+
+async function getMainBranchId() {
+  // Resolve the main branch using the official PlayCanvas REST API.
+  // Never assume that the project ID, scene ID or checkpoint hash is a branch ID.
+  let skip;
+  for (let i = 0; i < 100; i++) {
+    const params = skip ? '?skip=' + encodeURIComponent(skip) : '';
+    const page = await api('/projects/' + PROJECT_ID + '/branches' + params);
+    if (!Array.isArray(page.result)) throw new Error('Unexpected branches API response');
+    const main = page.result.find(branch => branch.name === 'main' && branch.closed !== true);
+    if (main?.id) return main.id;
+    if (!page.pagination?.hasMore || !page.result.length) break;
+    skip = page.result.at(-1).id;
+  }
+  throw new Error('PlayCanvas main branch bulunamadı; işlem yapılmadı.');
+}
+
+const branchId = await getMainBranchId();
 
 async function listAssets() {
   const result = [];
