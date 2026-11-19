@@ -103,7 +103,7 @@ test('A2 30 simulated network sessions fill one 15v15 room and exchange inputs',
     assert.equal(later.players.length,30);
     assert.equal(later.playerCounts.blue,15);
     assert.equal(later.playerCounts.red,15);
-    assert.ok(Array.from(room.game.players.values()).every(p=>p.lastSeq===1));
+    assert.ok((Array.from(room.game.players.values()) as {lastSeq:number}[]).every(p=>p.lastSeq===1));
     assert.ok(later.serverTick>snap.serverTick);
   } finally {
     await Promise.allSettled(players.map(p=>p.leave()));
