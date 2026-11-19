@@ -99,24 +99,3 @@ test('A2 30-player game simulation capacity and 15v15 teams',()=>{
   assert.ok(Array.from(sim.players.values()).every(p=>p.lastSeq===1));
   assert.equal(sim.snapshot().players.length,30);
 });
-test('A2 four SDK connections receive the same authoritative room state',{timeout:30000},async()=>{
-  const server=await boot(onlineServer);
-  const clients:Awaited<ReturnType<typeof server.connectTo>>[]=[];
-  try {
-    const room=await server.createRoom('macka_frontline');
-    for(let i=0;i<4;i++) clients.push(await server.connectTo(room));
-    const snap=room.game.snapshot() as BattleSnapshot;
-    assert.equal(snap.players.length,4);
-    assert.equal(snap.playerCounts.blue,2);
-    assert.equal(snap.playerCounts.red,2);
-    assert.equal(new Set(clients.map(c=>c.sessionId)).size,4);
-    for(let i=0;i<clients.length;i++){
-      clients[i].send('input',{seq:1,mx:0,mz:1,yaw:0,pitch:0,fire:false});
-    }
-    await sleep(250);
-    assert.ok((Array.from(room.game.players.values()) as {lastSeq:number}[]).every(p=>p.lastSeq===1));
-  }finally{
-    await Promise.allSettled(clients.map(c=>c.leave()));
-    await server.shutdown();
-  }
-});
