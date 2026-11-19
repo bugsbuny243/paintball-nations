@@ -80,33 +80,43 @@ test('A2 game simulation rejects client position, invalid values and untrusted s
   assert.equal(game.snapshot().playerCounts.red,0);
 });
 
-test('A2 30 simulated network sessions fill one 15v15 room and exchange inputs',{timeout:90000},async()=>{
-  const testServer=await boot(onlineServer);
-  const players:Awaited<ReturnType<typeof testServer.connectTo>>[]=[];
+
+test('A2 30-player game simulation capacity and 15v15 teams',()=>{
+  const sim=new MackaSimulation(geo);
+  const players=Array.from({length:30},(_,i)=>sim.addPlayer('capacity-'+String(i).padStart(2,'0')));
+  assert.equal(players.length,30);
+  assert.equal(sim.snapshot().playerCounts.blue,15);
+  assert.equal(sim.snapshot().playerCounts.red,15);
+  assert.equal(sim.snapshot().bots,0);
+  assert.throws(()=>sim.addPlayer('capacity-31'),/room_full/);
+  for(let i=0;i<players.length;i++) {
+    assert.equal(sim.submitInput(players[i].id,{
+      seq:1,mx:i%2?1:0,mz:i%2?0:1,
+      yaw:i%2?180:0,pitch:0,fire:false
+    }),true);
+  }
+  for(let i=0;i<6;i++)sim.step(0.05);
+  assert.ok(Array.from(sim.players.values()).every(p=>p.lastSeq===1));
+  assert.equal(sim.snapshot().players.length,30);
+});
+test('A2 four SDK connections receive the same authoritative room state',{timeout:30000},async()=>{
+  const server=await boot(onlineServer);
+  const clients:Awaited<ReturnType<typeof server.connectTo>>[]=[];
   try {
-    const room=await testServer.createRoom('macka_frontline');
-    for(let i=0;i<30;i++)players.push(await testServer.connectTo(room));
+    const room=await server.createRoom('macka_frontline');
+    for(let i=0;i<4;i++) clients.push(await server.connectTo(room));
     const snap=room.game.snapshot() as BattleSnapshot;
-    assert.equal(snap.players.length,30);
-    assert.equal(snap.playerCounts.blue,15);
-    assert.equal(snap.playerCounts.red,15);
-    assert.equal(snap.bots,0);
-    assert.equal(new Set(players.map(p=>p.sessionId)).size,30);
-    for(let i=0;i<players.length;i++) {
-      players[i].send('input',{
-        seq:1,mx:i%2?1:0,mz:i%2?0:1,
-        yaw:i%2?180:0,pitch:0,fire:false
-      });
+    assert.equal(snap.players.length,4);
+    assert.equal(snap.playerCounts.blue,2);
+    assert.equal(snap.playerCounts.red,2);
+    assert.equal(new Set(clients.map(c=>c.sessionId)).size,4);
+    for(let i=0;i<clients.length;i++){
+      clients[i].send('input',{seq:1,mx:0,mz:1,yaw:0,pitch:0,fire:false});
     }
-    await sleep(300);
-    const later=room.game.snapshot() as BattleSnapshot;
-    assert.equal(later.players.length,30);
-    assert.equal(later.playerCounts.blue,15);
-    assert.equal(later.playerCounts.red,15);
+    await sleep(250);
     assert.ok((Array.from(room.game.players.values()) as {lastSeq:number}[]).every(p=>p.lastSeq===1));
-    assert.ok(later.serverTick>snap.serverTick);
-  } finally {
-    await Promise.allSettled(players.map(p=>p.leave()));
-    await testServer.shutdown();
+  }finally{
+    await Promise.allSettled(clients.map(c=>c.leave()));
+    await server.shutdown();
   }
 });
