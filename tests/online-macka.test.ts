@@ -79,3 +79,34 @@ test('A2 game simulation rejects client position, invalid values and untrusted s
   game.removePlayer('human-b');
   assert.equal(game.snapshot().playerCounts.red,0);
 });
+
+test('A2 30 simulated network sessions fill one 15v15 room and exchange inputs',{timeout:90000},async()=>{
+  const testServer=await boot(onlineServer);
+  const players:Awaited<ReturnType<typeof testServer.connectTo>>[]=[];
+  try {
+    const room=await testServer.createRoom('macka_frontline');
+    for(let i=0;i<30;i++)players.push(await testServer.connectTo(room));
+    const snap=room.game.snapshot() as BattleSnapshot;
+    assert.equal(snap.players.length,30);
+    assert.equal(snap.playerCounts.blue,15);
+    assert.equal(snap.playerCounts.red,15);
+    assert.equal(snap.bots,0);
+    assert.equal(new Set(players.map(p=>p.sessionId)).size,30);
+    for(let i=0;i<players.length;i++) {
+      players[i].send('input',{
+        seq:1,mx:i%2?1:0,mz:i%2?0:1,
+        yaw:i%2?180:0,pitch:0,fire:false
+      });
+    }
+    await sleep(300);
+    const later=room.game.snapshot() as BattleSnapshot;
+    assert.equal(later.players.length,30);
+    assert.equal(later.playerCounts.blue,15);
+    assert.equal(later.playerCounts.red,15);
+    assert.ok(Array.from(room.game.players.values()).every(p=>p.lastSeq===1));
+    assert.ok(later.serverTick>snap.serverTick);
+  } finally {
+    await Promise.allSettled(players.map(p=>p.leave()));
+    await testServer.shutdown();
+  }
+});
