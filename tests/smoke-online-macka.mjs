@@ -18,10 +18,10 @@ for(const [label,page] of [['blue',a],['red',b]]){
 }
 try{
   await a.goto(url,{waitUntil:'domcontentloaded',timeout:30000});
-  await a.waitForFunction(()=>document.querySelector('#online-state')?.textContent?.includes('Bağlandı'),
+  await a.waitForFunction(()=>document.querySelector('#online-state')?.textContent?.includes('Misafir bağlandı'),
     null,{timeout:45000});
   await b.goto(url,{waitUntil:'domcontentloaded',timeout:30000});
-  await b.waitForFunction(()=>document.querySelector('#online-state')?.textContent?.includes('Bağlandı'),
+  await b.waitForFunction(()=>document.querySelector('#online-state')?.textContent?.includes('Misafir bağlandı'),
     null,{timeout:45000});
   for(const page of [a,b]){
     await page.waitForFunction(()=>{
@@ -45,6 +45,8 @@ try{
   assert.equal(typeof z2,'number');
   assert.ok(z2<z1-0.2, 'Remote player position should come from server and update after movement');
   assert.equal(errors.length,0,'Browser runtime exceptions: '+errors.join(', '));
+  const guestStatus=await a.locator('#online-state').textContent();
+  assert.ok(guestStatus?.includes('Misafir bağlandı'),'Expected server-issued guest identity state');
   console.log('A2 two-browser Maçka test PASSED',JSON.stringify({blueConnected:true,redConnected:true,remoteZBefore:z1,remoteZAfter:z2}));
 }finally{
   await context.close();await browser.close();
