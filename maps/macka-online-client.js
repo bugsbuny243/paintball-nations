@@ -127,9 +127,8 @@ if(new URLSearchParams(location.search).get('online')==='1'){
           throw new Error('Oyun sunucusu geçerli misafir bileti döndürmedi');
         }
         const client=new Client(paramsUrl);
-        client.auth.token=guest.ticket;
-        status('Bilet doğrulandı · Maçka odasına giriliyor…');
-        room=await client.joinOrCreate('macka_frontline');
+        status('Bilet doğrulanıyor · Maçka odasına giriliyor…');
+        room=await client.joinOrCreate('macka_frontline',{guestTicket:guest.ticket});
         connected=true;fire.disabled=false;
         status('Misafir bağlandı · gerçek hesap değil');
         map.setMode(false);
