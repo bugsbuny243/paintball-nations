@@ -7,6 +7,17 @@ import {pathToFileURL} from 'node:url';
 import {MackaFrontlineRoom} from './rooms/macka-room.ts';
 import {issueGuestTicket} from './auth/guest-ticket.ts';
 
+type GuestRequest={
+  headers:{origin?:string};
+  socket:{remoteAddress?:string};
+};
+type GuestResponse={
+  setHeader(name:string,value:string):void;
+  status(code:number):GuestResponse;
+  json(data:unknown):GuestResponse;
+  end():void;
+};
+
 const permittedOrigins=new Set([
   'http://127.0.0.1:8765',
   'http://localhost:8765'
@@ -26,7 +37,7 @@ export const onlineServer=defineServer({
     macka_frontline:defineRoom(MackaFrontlineRoom)
   },
   express:(app)=>{
-    app.options('/api/v1/guest-ticket',(req,res)=>{
+    app.options('/api/v1/guest-ticket',(req:GuestRequest,res:GuestResponse)=>{
       const origin=req.headers.origin;
       if(origin && !permittedOrigins.has(origin)){res.status(403).end();return;}
       if(origin)res.setHeader('Access-Control-Allow-Origin',origin);
@@ -35,7 +46,7 @@ export const onlineServer=defineServer({
       res.setHeader('Vary','Origin');
       res.status(204).end();
     });
-    app.post('/api/v1/guest-ticket',(req,res)=>{
+    app.post('/api/v1/guest-ticket',(req:GuestRequest,res:GuestResponse)=>{
       res.setHeader('Cache-Control','no-store');
       const origin=req.headers.origin;
       if(origin && !permittedOrigins.has(origin)){
@@ -63,7 +74,7 @@ export const onlineServer=defineServer({
       }
       res.status(200).json({protocolVersion:1,guest:true,...issueGuestTicket()});
     });
-    app.get('/api/v1/online-health',(_req,res)=>{
+    app.get('/api/v1/online-health',(_req:GuestRequest,res:GuestResponse)=>{
       res.setHeader('Cache-Control','no-store');
       res.status(200).json({ok:true,service:'pbn-macka-guest-demo',productionReady:false});
     });
