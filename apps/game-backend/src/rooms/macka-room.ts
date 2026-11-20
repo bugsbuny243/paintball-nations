@@ -15,8 +15,10 @@ export class MackaFrontlineRoom extends Room {
   readonly mapId='TR-MACKA';
   readonly game=new MackaSimulation(geo);
   readonly guestIds=new Map<string,string>();
-  static async onAuth(token:unknown):Promise<GuestClaims> {
-    const claims=verifyGuestTicket(token);
+  static async onAuth(_unusedToken:unknown,options:unknown):Promise<GuestClaims> {
+    const candidate=options&&typeof options==='object'
+      ?(options as Record<string,unknown>).guestTicket:undefined;
+    const claims=verifyGuestTicket(candidate);
     if(!claims)throw new ServerError(401,'guest_ticket_invalid_or_expired');
     return claims;
   }
