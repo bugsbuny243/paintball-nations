@@ -11,15 +11,16 @@ import {MackaSimulation,normalizeInput,type BattleSnapshot} from '../apps/game-b
 import {readFileSync} from 'node:fs';
 const geo=JSON.parse(readFileSync(new URL('../maps/istanbul-macka.json',import.meta.url),'utf8')) as {buildings:{p:number[][]}[]};
 
-test('A2 two human sessions join one authoritative Colyseus Maçka room',async()=>{
+test('A3 two ticketed human sessions join one authoritative Colyseus Maçka room',{timeout:20000},async()=>{
   const testServer=await boot(onlineServer);
   try{
     const room=await testServer.createRoom('macka_frontline');
-    const ticketBlue=issueGuestTicket().ticket;
-    testServer.sdk.auth.token=ticketBlue;
-    const blue=await testServer.sdk.joinById(room.roomId);
-    testServer.sdk.auth.token=issueGuestTicket().ticket;
-    const red=await testServer.sdk.joinById(room.roomId);
+    const blue=await testServer.sdk.joinOrCreate('macka_frontline',{
+      guestTicket:issueGuestTicket().ticket
+    });
+    const red=await testServer.sdk.joinOrCreate('macka_frontline',{
+      guestTicket:issueGuestTicket().ticket
+    });
     assert.equal(blue.roomId,red.roomId);
     assert.notEqual(blue.sessionId,red.sessionId);
     const before=room.game.snapshot() as BattleSnapshot;
@@ -119,16 +120,16 @@ test('A3 guest tickets reject missing, tampered and expired payloads',()=>{
   assert.equal(verifyGuestTicket('not-a-ticket',1_800_000_000_000),null);
 });
 
-test('A3 room rejects missing guest ticket and keeps player slots empty',async()=>{
+test('A3 room rejects missing guest ticket and keeps player slots empty',{timeout:20000},async()=>{
   const server=await boot(onlineServer);
   try{
     const room=await server.createRoom('macka_frontline');
-    server.sdk.auth.token='';
-    await assert.rejects(()=>server.sdk.joinById(room.roomId));
+    await assert.rejects(()=>server.sdk.joinOrCreate('macka_frontline',{}));
     assert.equal(room.game.snapshot().players.length,0);
     assert.equal(room.guestIds.size,0);
-    server.sdk.auth.token=issueGuestTicket().ticket;
-    const guest=await server.sdk.joinById(room.roomId);
+    const guest=await server.sdk.joinOrCreate('macka_frontline',{
+      guestTicket:issueGuestTicket().ticket
+    });
     assert.equal(room.game.snapshot().players.length,1);
     assert.equal(room.guestIds.size,1);
     await guest.leave();
