@@ -17,7 +17,7 @@ if(new URLSearchParams(location.search).get('online')==='1'){
     const panel=document.createElement('aside');
     panel.id='online-macka-hud';
     panel.innerHTML=[
-      '<strong>🌍 MAÇKA ONLINE · A2</strong>',
+      '<strong>🌍 MAÇKA ONLINE · A3 TEST</strong>',
       '<span id="online-state">Sunucu bağlantısı kontrol ediliyor…</span>',
       '<span id="online-teams">🔵 0 gerçek oyuncu · 🔴 0 gerçek oyuncu · 🤖 0 bot</span>',
       '<span id="online-score">Skor: 0 - 0</span>',
@@ -117,11 +117,21 @@ if(new URLSearchParams(location.search).get('online')==='1'){
     }
     async function connect(){
       try{
-        status('Maçka oyun sunucusuna bağlanılıyor…');
+        status('Güvenli misafir oturumu alınıyor…');
+        const response=await fetch(paramsUrl+'/api/v1/guest-ticket',{
+          method:'POST',cache:'no-store',credentials:'omit'
+        });
+        if(!response.ok)throw new Error('Misafir girişi reddedildi: HTTP '+response.status);
+        const guest=await response.json();
+        if(!guest||typeof guest.ticket!=='string'||!guest.guest) {
+          throw new Error('Oyun sunucusu geçerli misafir bileti döndürmedi');
+        }
         const client=new Client(paramsUrl);
+        client.auth.token=guest.ticket;
+        status('Bilet doğrulandı · Maçka odasına giriliyor…');
         room=await client.joinOrCreate('macka_frontline');
         connected=true;fire.disabled=false;
-        status('Bağlandı · Maçka cephe antrenmanı');
+        status('Misafir bağlandı · gerçek hesap değil');
         map.setMode(false);
         map.setExternalControl(true);
         room.onMessage('snapshot',renderSnapshot);
