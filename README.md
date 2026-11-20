@@ -1,5 +1,14 @@
 # Paintball Nations 🎨
 
+## 🔐 A3 — Geliştirme misafir biletleri / doğrulanmış pozitif bağlantı
+
+- [A3 kodu, test sonuçları ve çözülmemiş güvenlik bloklayıcısı](docs/guest-session-a3.md)
+- [5/5 geçen Colyseus ve iki Chrome tarayıcısı testi](https://github.com/bugsbuny243/paintball-nations/actions/runs/44660851253)
+- Sunucu imzalı, 10 dakikalık geçici bilet; istemci `?online=1` modunda bileti alıp Maçka odasına katılır.
+- **Bloklayıcı:** Biletsiz bağlantının ağ seviyesinde reddedilmesi Colyseus 0.18.10 altında `ERR_HTTP_HEADERS_SENT` hatası doğuruyor. Bu negatif ağ testi henüz geçmedi; şu anda yalnız fonksiyon düzeyinde reddetme doğrulaması var. **Kamusal üretim dağıtımı kapalı.**
+- Gerçek oyuncu hesabı, oturum iptali, moderasyon, 30 eşzamanlı ağ bağlantısı ve 24/7 sunucu henüz yok.
+
+
 ## ✅ A2 — Maçka çok oyunculu ağ prototipi
 
 - [A2 çevrim içi altyapısı: kod, test sonucu ve sınırlar](docs/online-a2-implementation.md)
