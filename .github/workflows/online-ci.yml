@@ -1,4 +1,4 @@
-name: Validate A2 Maçka online multiplayer
+name: Validate A3 Maçka guest-auth multiplayer
 
 on:
   push:
@@ -21,7 +21,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: pbn-online-macka
+  group: pbn-online-macka-a3-guest-auth
   cancel-in-progress: true
 
 jobs:
