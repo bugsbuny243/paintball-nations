@@ -40,7 +40,7 @@ jobs:
       - name: Build browser Colyseus client
         run: npm run online:build
       - name: Test two real SDK connections and server authority
-        run: npm run online:test
+        run: timeout --signal=TERM --kill-after=5s 70s npm run online:test
       - name: Install lightweight browser automation
         run: npm install --no-save playwright
       - name: Test 2 real PlayCanvas browser clients locally
