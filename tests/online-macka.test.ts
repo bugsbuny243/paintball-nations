@@ -114,7 +114,8 @@ test('A3 guest tickets reject missing, tampered and expired payloads',()=>{
   assert.equal(verifyGuestTicket(issued.ticket,1_800_000_000_000+
      (GUEST_TICKET_TTL_SECONDS+1)*1000),null);
   assert.equal(verifyGuestTicket('',1_800_000_000_000),null);
-  assert.equal(verifyGuestTicket(issued.ticket.slice(0,-1)+'x',1_800_000_000_000),null);
+  const altered=issued.ticket.slice(0,-1)+(issued.ticket.endsWith('a')?'b':'a');
+  assert.equal(verifyGuestTicket(altered,1_800_000_000_000),null);
   assert.equal(verifyGuestTicket('not-a-ticket',1_800_000_000_000),null);
 });
 
