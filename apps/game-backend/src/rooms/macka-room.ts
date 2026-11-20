@@ -2,7 +2,8 @@
  * All score, movement and virtual paint hit changes originate server-side.
  * This is the A2 network loop, not 15v15 load proof and not a deployed service.
  */
-import {Room, type Client} from 'colyseus';
+import {Room, ServerError, type Client} from 'colyseus';
+import {verifyGuestTicket, type GuestClaims} from '../auth/guest-ticket.ts';
 import {readFileSync} from 'node:fs';
 import {MackaSimulation,type CollisionMap} from './macka-simulation.ts';
 
@@ -13,6 +14,12 @@ export class MackaFrontlineRoom extends Room {
   autoDispose=true;
   readonly mapId='TR-MACKA';
   readonly game=new MackaSimulation(geo);
+  readonly guestIds=new Map<string,string>();
+  static onAuth(token:unknown):GuestClaims {
+    const claims=verifyGuestTicket(token);
+    if(!claims)throw new ServerError(401,'guest_ticket_invalid_or_expired');
+    return claims;
+  }
   onCreate():void{
     this.onMessage('input',(client:Client,input:unknown)=>{
       this.game.submitInput(client.sessionId,input);
@@ -27,7 +34,12 @@ export class MackaFrontlineRoom extends Room {
     },100);
   }
   onJoin(client:Client):void{
+    const guest=client.auth as GuestClaims | undefined;
+    if(!guest?.sub)throw new ServerError(401,'guest_ticket_required');
+    if(Array.from(this.guestIds.values()).includes(guest.sub))
+      throw new ServerError(409,'guest_already_in_room');
     const player=this.game.addPlayer(client.sessionId);
+    this.guestIds.set(client.sessionId,guest.sub);
     client.send('welcome',{sessionId:client.sessionId,team:player.team,
       roomId:this.roomId,mapId:this.mapId,protocolVersion:1,maxClients:30});
     client.send('snapshot',this.game.snapshot());
@@ -48,6 +60,7 @@ export class MackaFrontlineRoom extends Room {
     client.send('snapshot',this.game.snapshot());
   }
   onLeave(client:Client):void{
+    this.guestIds.delete(client.sessionId);
     this.game.removePlayer(client.sessionId);
     this.broadcast('left',{sessionId:client.sessionId});
   }
