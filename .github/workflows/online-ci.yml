@@ -6,6 +6,7 @@ on:
     paths:
       - 'apps/game-backend/src/online-server.ts'
       - 'apps/game-backend/src/rooms/**'
+      - 'apps/game-backend/src/auth/**'
       - 'maps/macka-online-client.js'
       - 'maps/macka-viewer.js'
       - 'maps/macka.html'
