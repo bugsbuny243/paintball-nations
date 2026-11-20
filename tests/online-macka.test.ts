@@ -15,10 +15,10 @@ test('A3 two ticketed human sessions join one authoritative Colyseus Maçka room
   const testServer=await boot(onlineServer);
   try{
     const room=await testServer.createRoom('macka_frontline');
-    const blue=await testServer.sdk.joinOrCreate('macka_frontline',{
+    const blue=await testServer.connectTo(room,{
       guestTicket:issueGuestTicket().ticket
     });
-    const red=await testServer.sdk.joinOrCreate('macka_frontline',{
+    const red=await testServer.connectTo(room,{
       guestTicket:issueGuestTicket().ticket
     });
     assert.equal(blue.roomId,red.roomId);
@@ -124,10 +124,10 @@ test('A3 room rejects missing guest ticket and keeps player slots empty',{timeou
   const server=await boot(onlineServer);
   try{
     const room=await server.createRoom('macka_frontline');
-    await assert.rejects(()=>server.sdk.joinOrCreate('macka_frontline',{}));
+    await assert.rejects(()=>server.connectTo(room,{}));
     assert.equal(room.game.snapshot().players.length,0);
     assert.equal(room.guestIds.size,0);
-    const guest=await server.sdk.joinOrCreate('macka_frontline',{
+    const guest=await server.connectTo(room,{
       guestTicket:issueGuestTicket().ticket
     });
     assert.equal(room.game.snapshot().players.length,1);
