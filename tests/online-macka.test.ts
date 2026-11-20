@@ -6,6 +6,7 @@ import {test} from 'node:test';
 import {boot} from '@colyseus/testing';
 import {setTimeout as sleep} from 'node:timers/promises';
 import {onlineServer} from '../apps/game-backend/src/online-server.ts';
+import {issueGuestTicket,verifyGuestTicket,GUEST_TICKET_TTL_SECONDS} from '../apps/game-backend/src/auth/guest-ticket.ts';
 import {MackaSimulation,normalizeInput,type BattleSnapshot} from '../apps/game-backend/src/rooms/macka-simulation.ts';
 import {readFileSync} from 'node:fs';
 const geo=JSON.parse(readFileSync(new URL('../maps/istanbul-macka.json',import.meta.url),'utf8')) as {buildings:{p:number[][]}[]};
@@ -14,8 +15,11 @@ test('A2 two human sessions join one authoritative Colyseus Maçka room',async()
   const testServer=await boot(onlineServer);
   try{
     const room=await testServer.createRoom('macka_frontline');
-    const blue=await testServer.connectTo(room);
-    const red=await testServer.connectTo(room);
+    const ticketBlue=issueGuestTicket().ticket;
+    testServer.sdk.auth.token=ticketBlue;
+    const blue=await testServer.sdk.joinById(room.roomId);
+    testServer.sdk.auth.token=issueGuestTicket().ticket;
+    const red=await testServer.sdk.joinById(room.roomId);
     assert.equal(blue.roomId,red.roomId);
     assert.notEqual(blue.sessionId,red.sessionId);
     const before=room.game.snapshot() as BattleSnapshot;
@@ -98,4 +102,34 @@ test('A2 30-player game simulation capacity and 15v15 teams',()=>{
   for(let i=0;i<6;i++)sim.step(0.05);
   assert.ok(Array.from(sim.players.values()).every(p=>p.lastSeq===1));
   assert.equal(sim.snapshot().players.length,30);
+});
+
+test('A3 guest tickets reject missing, tampered and expired payloads',()=>{
+  const issued=issueGuestTicket(1_800_000_000_000);
+  const claims=verifyGuestTicket(issued.ticket,1_800_000_000_500);
+  assert.ok(claims);
+  assert.equal(claims.v,1);
+  assert.equal(claims.aud,'pbn-macka-development');
+  assert.equal(claims.exp-claims.iat,GUEST_TICKET_TTL_SECONDS);
+  assert.equal(verifyGuestTicket(issued.ticket,1_800_000_000_000+
+     (GUEST_TICKET_TTL_SECONDS+1)*1000),null);
+  assert.equal(verifyGuestTicket('',1_800_000_000_000),null);
+  assert.equal(verifyGuestTicket(issued.ticket.slice(0,-1)+'x',1_800_000_000_000),null);
+  assert.equal(verifyGuestTicket('not-a-ticket',1_800_000_000_000),null);
+});
+
+test('A3 room rejects missing guest ticket and keeps player slots empty',async()=>{
+  const server=await boot(onlineServer);
+  try{
+    const room=await server.createRoom('macka_frontline');
+    server.sdk.auth.token='';
+    await assert.rejects(()=>server.sdk.joinById(room.roomId));
+    assert.equal(room.game.snapshot().players.length,0);
+    assert.equal(room.guestIds.size,0);
+    server.sdk.auth.token=issueGuestTicket().ticket;
+    const guest=await server.sdk.joinById(room.roomId);
+    assert.equal(room.game.snapshot().players.length,1);
+    assert.equal(room.guestIds.size,1);
+    await guest.leave();
+  }finally{await server.shutdown();}
 });
