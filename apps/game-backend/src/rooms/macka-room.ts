@@ -15,10 +15,10 @@ export class MackaFrontlineRoom extends Room {
   readonly mapId='TR-MACKA';
   readonly game=new MackaSimulation(geo);
   readonly guestIds=new Map<string,string>();
-  static async onAuth(_unusedToken:unknown,options:unknown):Promise<GuestClaims|false> {
+  async onAuth(_client:Client,options:unknown):Promise<GuestClaims|false> {
     const candidate=options&&typeof options==='object'
       ?(options as Record<string,unknown>).guestTicket:undefined;
-    // Falsy return uses the built-in Colyseus rejection path for invalid tickets.
+    // Instance admission runs after reservation and is still server authoritative.
     return verifyGuestTicket(candidate) || false;
   }
   onCreate():void{
