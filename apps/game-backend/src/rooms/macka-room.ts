@@ -15,12 +15,11 @@ export class MackaFrontlineRoom extends Room {
   readonly mapId='TR-MACKA';
   readonly game=new MackaSimulation(geo);
   readonly guestIds=new Map<string,string>();
-  static async onAuth(_unusedToken:unknown,options:unknown):Promise<GuestClaims> {
+  static async onAuth(_unusedToken:unknown,options:unknown):Promise<GuestClaims|false> {
     const candidate=options&&typeof options==='object'
       ?(options as Record<string,unknown>).guestTicket:undefined;
-    const claims=verifyGuestTicket(candidate);
-    if(!claims)throw new ServerError(401,'guest_ticket_invalid_or_expired');
-    return claims;
+    // Falsy return uses the built-in Colyseus rejection path for invalid tickets.
+    return verifyGuestTicket(candidate) || false;
   }
   onCreate():void{
     this.onMessage('input',(client:Client,input:unknown)=>{
