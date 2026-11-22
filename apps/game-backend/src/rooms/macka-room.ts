@@ -23,13 +23,18 @@ export class MackaFrontlineRoom extends Room {
     if(opts.matchTicket!==undefined){
       const identity=verifyPilotMatchTicket(opts.matchTicket);
       const db=developmentPilotStore();
-      if(!identity||!db)return false;
+      if(!identity||!db){
+        if(process.env.NODE_ENV==='test')console.log('C2 room admission denied: invalid signature or DB unavailable');
+        return false;
+      }
       try {
         const active=await db.isMatchSessionActive({
           pilotId:identity.sub,sessionId:identity.sid,factionId:identity.factionId
         });
+        if(process.env.NODE_ENV==='test')console.log('C2 room admission DB active:',active,'faction:',identity.factionId);
         return active?identity:false;
-      }catch{
+      }catch(error){
+        if(process.env.NODE_ENV==='test')console.error('C2 room admission DB error:',error);
         // Database outage must not silently admit an unverified pilot.
         return false;
       }
@@ -56,6 +61,7 @@ export class MackaFrontlineRoom extends Room {
     if(Array.from(this.guestIds.values()).includes(identity.sub))
       throw new ServerError(409,'identity_already_in_room');
     const pilot='factionId' in identity?identity as PilotMatchClaims:null;
+    if(process.env.NODE_ENV==='test')console.log('C2 onJoin identity:',pilot?'pilot':'guest',pilot?.factionId??'auto');
     const player=this.game.addPlayer(client.sessionId,
       pilot?(pilot.factionId==='TR'?'blue':'red'):undefined);
     this.guestIds.set(client.sessionId,identity.sub);
