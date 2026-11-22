@@ -8,6 +8,7 @@ import {MackaFrontlineRoom} from './rooms/macka-room.ts';
 import {issueGuestTicket} from './auth/guest-ticket.ts';
 import {developmentPilotStore} from './auth/dev-pilot-db.ts';
 import {issuePilotMatchTicket} from './auth/pilot-match-ticket.ts';
+import {FrontlineStore} from './frontline-store.ts';
 
 type GuestRequest={
   headers:{origin?:string;authorization?:string};
@@ -36,6 +37,18 @@ const issueCounts=new Map<string,{count:number;windowStart:number}>();
 
 
 export const onlineServer=defineServer({
+  beforeListen:async()=>{
+    // Reclaim expired leases on cold start. A fresh lease is NEVER recovered,
+    // even if its old room is absent after a sudden process exit.
+    if(process.env.DEV_ENABLE_FRONTLINES!=='1')return;
+    if(process.env.DEV_REQUIRE_PILOT!=='1')
+      throw new Error('C5 recovery requires pilot-only mode');
+    const db=developmentPilotStore();
+    if(!db)throw new Error('C5 recovery requires DATABASE_URL');
+    const recovered=await new FrontlineStore(db.pool).recoverExpired(100);
+    if(recovered.length)
+      console.info('C5 expired battles recovered on startup:',recovered.length);
+  },
   rooms:{
     macka_frontline:defineRoom(MackaFrontlineRoom)
   },
