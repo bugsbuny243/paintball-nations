@@ -47,6 +47,7 @@ export class FrontlineLifecycle {
   private endsAt:number|null=null;
   private closed=false;
   private pending:Promise<void>|null=null;
+  private finishing:Promise<FrontlineSettlement|null>|null=null;
   private latest:FrontlineWorldState|null=null;
   private readonly store:FrontlineStore;
   private readonly world:WorldStore;
@@ -97,42 +98,38 @@ export class FrontlineLifecycle {
   }
   async finish(scores:Scores):Promise<FrontlineSettlement|null>{
     if(this.pending)await this.pending;
+    if(this.finishing)return this.finishing;
     if(!this.opened||this.closed)return null;
     const opened=this.opened;
-    // Consume the battle before awaiting I/O so two timers cannot settle twice.
-    this.opened=null;
-    this.endsAt=null;
-    const scoreIsValid=(v:number)=>Number.isSafeInteger(v)&&v>=0&&v<=1000000;
-    if(!scoreIsValid(scores.blue)||!scoreIsValid(scores.red)){
-      await this.store.cancel(opened.battleId,this.sourceRoomId);
-      await this.sendAfterCancellation(opened.battleId,'CANCELLED');
-      return null;
-    }
-    const attackerScore=opened.attackerFactionId==='TR'?scores.blue:scores.red;
-    const defenderScore=opened.defenderFactionId==='TR'?scores.blue:scores.red;
-    if(attackerScore===defenderScore||!this.hasTwoTeams()){
-      await this.store.cancel(opened.battleId,this.sourceRoomId);
-      await this.sendAfterCancellation(opened.battleId,
-        attackerScore===defenderScore?'DRAW':'CANCELLED');
-      return null;
-    }
-    const winnerFactionId=attackerScore>defenderScore
-      ?opened.attackerFactionId:opened.defenderFactionId;
-    const result=await this.store.settle({
-      battleId:opened.battleId,sourceRoomId:this.sourceRoomId,
-      winnerFactionId,attackerScore,defenderScore
-    });
-    const after=await ownerFromWorld(this.world);
-    this.broadcast({sectorId:SECTOR,ownerFactionId:after.ownerFactionId,
-      state:'OWNED',worldVersion:after.version,battleId:opened.battleId,
-      endsAt:null,outcome:result.captured?'CAPTURED':'DEFENDED'});
-    return result;
-  }
-  private async sendAfterCancellation(battleId:string,outcome:'DRAW'|'CANCELLED'){
-    const after=await ownerFromWorld(this.world);
-    this.broadcast({sectorId:SECTOR,ownerFactionId:after.ownerFactionId,
-      state:'OWNED',worldVersion:after.version,battleId,
-      endsAt:null,outcome});
+    const task=(async():Promise<FrontlineSettlement|null>=>{
+      const valid=(v:number)=>Number.isSafeInteger(v)&&v>=0&&v<=1000000;
+      const attackerScore=opened.attackerFactionId==='TR'?scores.blue:scores.red;
+      const defenderScore=opened.defenderFactionId==='TR'?scores.blue:scores.red;
+      if(!valid(attackerScore)||!valid(defenderScore)||
+         attackerScore===defenderScore||!this.hasTwoTeams()){
+        const outcome=attackerScore===defenderScore?'DRAW':'CANCELLED';
+        const version=await this.store.cancel(opened.battleId,this.sourceRoomId);
+        this.opened=null;this.endsAt=null;
+        this.broadcast({sectorId:SECTOR,ownerFactionId:opened.defenderFactionId,
+          state:'OWNED',worldVersion:version,battleId:opened.battleId,
+          endsAt:null,outcome});
+        return null;
+      }
+      const winnerFactionId=attackerScore>defenderScore
+        ?opened.attackerFactionId:opened.defenderFactionId;
+      const result=await this.store.settle({
+        battleId:opened.battleId,sourceRoomId:this.sourceRoomId,
+        winnerFactionId,attackerScore,defenderScore
+      });
+      this.opened=null;this.endsAt=null;
+      this.broadcast({sectorId:SECTOR,ownerFactionId:result.newOwner,
+        state:'OWNED',worldVersion:result.worldVersion,battleId:opened.battleId,
+        endsAt:null,outcome:result.captured?'CAPTURED':'DEFENDED'});
+      return result;
+    })();
+    this.finishing=task;
+    try{return await task;}
+    finally{if(this.finishing===task)this.finishing=null;}
   }
   async tick(scores:Scores):Promise<void>{
     if(this.closed||!this.opened||this.endsAt===null||Date.now()<this.endsAt)return;
@@ -140,6 +137,7 @@ export class FrontlineLifecycle {
   }
   async dispose():Promise<void>{
     if(this.pending)await this.pending.catch(()=>{});
+    if(this.finishing)await this.finishing.catch(()=>{});
     if(this.closed)return;
     this.closed=true;
     if(!this.opened)return;
