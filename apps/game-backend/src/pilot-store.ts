@@ -91,6 +91,36 @@ export class PilotStore {
     return pilot;
   }
 
+  /** The only way to issue a match ticket: resolve the session server-side first. */
+  async matchIdentity(token:unknown):Promise<{
+    pilotId:string;sessionId:string;factionId:string;displayName:string
+  }|null>{
+    if(!validSession(token))return null;
+    const q=await this.pool.query<{
+      pilotId:string;sessionId:string;factionId:string;displayName:string
+    }>(
+      'SELECT p.id AS "pilotId",s.id AS "sessionId",'+
+      'p.faction_id AS "factionId",p.display_name AS "displayName" '+
+      'FROM pilot_sessions s JOIN pilots p ON p.id=s.pilot_id '+
+      'WHERE s.token_hash=$1 AND s.revoked_at IS NULL AND s.expires_at>NOW()',
+      [hashSessionToken(token)]
+    );
+    return q.rows[0]||null;
+  }
+
+  /** Recheck DB after verifying a signed match ticket: logout takes effect at next join. */
+  async isMatchSessionActive(identity:{
+    pilotId:string;sessionId:string;factionId:string
+  }):Promise<boolean>{
+    const q=await this.pool.query(
+      'SELECT 1 FROM pilot_sessions s JOIN pilots p ON p.id=s.pilot_id '+
+      'WHERE s.id=$1 AND s.pilot_id=$2 AND p.faction_id=$3 '+
+      'AND s.revoked_at IS NULL AND s.expires_at>NOW() LIMIT 1',
+      [identity.sessionId,identity.pilotId,identity.factionId]
+    );
+    return (q.rowCount??0)>0;
+  }
+
   async logout(token:unknown):Promise<boolean> {
     if(!validSession(token))return false;
     const q=await this.pool.query(
