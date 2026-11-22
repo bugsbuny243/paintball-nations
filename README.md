@@ -1,5 +1,13 @@
 # Paintball Nations 🎨
 
+## ✅ C1 — Kalıcı oyuncu profili ve ülke ekonomisi bağlantısı
+
+- [C1 teknik uygulama, güvenlik sınırları ve test raporu](docs/pilot-c1-implementation.md)
+- [PostgreSQL üzerinde 15/15 başarılı test](https://github.com/bugsbuny243/paintball-nations/actions/runs/45010029239)
+- Rastgele takma isim, sunucuda UUID profil, 14 günlük hash'lenmiş ve iptal edilebilir yerel geliştirme oturumu; yalnız oyuncunun bağlı olduğu ülkenin kaynaklarını okuma.
+- **Yayın durumu:** C1 henüz PlayCanvas arayüzü veya Colyseus oturumuna bağlanmadı; canlı sunucuda çalışmıyor. A3 biletsiz giriş hatası ve gerçek hesap kurtarma/izin sistemi tamamlanmadan kamuya açık dağıtım yapılmayacak.
+
+
 ## 🧠 Çekirdek Oyun Sistemleri V1 — Kalıcı Dünya Ürün Tasarımı
 
 - [Tam tasarım: Üs Endüstrisi, Stratejik Kariyer, Ülke Ligleri, Özel Operasyonlar, Komuta Çubuğu, botlar ve 15v15](docs/paintball-nations-core-systems-v1.md)
