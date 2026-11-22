@@ -3,6 +3,8 @@ name: Validate C2 Maçka persistent pilot multiplayer
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
     paths:
       - 'apps/game-backend/src/**'
       - 'apps/game-backend/sql/**'
