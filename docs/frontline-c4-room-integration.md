@@ -36,7 +36,7 @@
 
 ## Çözümlenmemiş meseleler
 
-- **Colyseus 0.18.10 geçersiz/biletsiz matchmaking** reddinde `ERR_HTTP_HEADERS_SENT` üretebilen hata yolu henüz çözülmedi. Kamuya açık dağıtım engeli devam ediyor.
+- **Güncel A3/C2 ağ testleri:** Geçersiz/biletsiz bilet, iptal edilmiş pilot ve bilinmeyen oda isteği [izole test sürecinde reddedildi](https://github.com/bugsbuny243/paintball-nations/actions/runs/45038047401). Önceki çoklu `boot()` düzeninde görülen `ERR_HTTP_HEADERS_SENT` operasyonel yeniden başlatma ve süreç toparlama açısından henüz kapatılmış değildir. Kamuya açık dağıtım engeli devam ediyor.
 - Maç bitmeden hesap oturumunun iptali o andaki oyuncuyu derhâl atma politikasına bağlı değil.
 - Kısa süreli ağ bağlantı kopuşları, süreç çökmesi, DB kesintisi ve yeniden katılım sırasında dünya fethini tamamlayıcı operasyonel testler eksik.
 - Maç sonucu şimdilik oyuncu isabet skorlarına dayanıyor; oyuncunun yüksek zekâ/strateji katkısını ölçen kontrol noktası, ikmal, istihbarat ve komutanlık puanları henüz C4'e bağlanmadı.
@@ -45,6 +45,6 @@
 
 ## Sonraki kabul kapısı: C5
 
-Çok oyunculu dünyanın merkezi için **yetkili sektör yaşam döngüsü kurtarma işi**, stratejik kontrol noktaları / ikmal hedefleri ve maç içinde görünen dünya haritasının gerçek oyuncularla Chrome/Android testleri. Ardından invalid-matchmaking güvenlik sorunu çözülmeden kamuya açık sürüme geçilmeyecek.
+Çok oyunculu dünyanın merkezi için **yetkili sektör yaşam döngüsü kurtarma işi**, stratejik kontrol noktaları / ikmal hedefleri ve maç içinde görünen dünya haritasının gerçek oyuncularla Chrome/Android testleri. Yeniden başlatma/yanlış oturum dayanıklılığı, üretim hesap güvenliği ve yük testi tamamlanmadan kamuya açık sürüme geçilmeyecek.
 
 **Bağlantılı belgeler:** [C3 dünya fethi veri katmanı](frontline-c3-implementation.md), [C2 pilot bağlantısı](pilot-match-c2.md), [Çekirdek sistemler V1](paintball-nations-core-systems-v1.md).
