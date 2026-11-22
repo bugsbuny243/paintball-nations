@@ -21,6 +21,7 @@
     "tests/world-core.test.ts",
     "tests/online-macka.test.ts",
     "tests/pilot-profile.test.ts",
-    "tests/pilot-match.test.ts"
+    "tests/pilot-match.test.ts",
+    "tests/frontline-settlement.test.ts"
   ]
 }
