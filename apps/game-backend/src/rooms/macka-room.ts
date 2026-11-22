@@ -6,6 +6,8 @@ import {Room, ServerError, type Client} from 'colyseus';
 import {verifyGuestTicket, type GuestClaims} from '../auth/guest-ticket.ts';
 import {verifyPilotMatchTicket, type PilotMatchClaims} from '../auth/pilot-match-ticket.ts';
 import {developmentPilotStore} from '../auth/dev-pilot-db.ts';
+import {FrontlineLifecycle} from './frontline-lifecycle.ts';
+import type {FactionId} from '../auth/pilot-match-ticket.ts';
 import {readFileSync} from 'node:fs';
 import {MackaSimulation,type CollisionMap} from './macka-simulation.ts';
 
@@ -17,6 +19,8 @@ export class MackaFrontlineRoom extends Room {
   readonly mapId='TR-MACKA';
   readonly game=new MackaSimulation(geo);
   readonly guestIds=new Map<string,string>();
+  readonly pilotFactions=new Map<string,FactionId>();
+  private frontline:FrontlineLifecycle|null=null;
   async onAuth(_client:Client,options:unknown):Promise<GuestClaims|PilotMatchClaims|false> {
     const opts=options&&typeof options==='object'
       ?options as Record<string,unknown>:{};
@@ -39,10 +43,22 @@ export class MackaFrontlineRoom extends Room {
         return false;
       }
     }
-    if(process.env.DEV_REQUIRE_PILOT==='1')return false;
+    if(process.env.DEV_REQUIRE_PILOT==='1'||process.env.DEV_ENABLE_FRONTLINES==='1')
+      return false;
     return verifyGuestTicket(opts.guestTicket)||false;
   }
   onCreate():void{
+    if(process.env.DEV_ENABLE_FRONTLINES==='1'){
+      if(process.env.DEV_REQUIRE_PILOT!=='1')
+        throw new Error('C4 requires pilot-only DEV_REQUIRE_PILOT=1 to exclude guest score interference');
+      this.frontline=new FrontlineLifecycle(this.roomId,
+        ()=>new Set(this.pilotFactions.values()),
+        state=>this.broadcast('world_state',state));
+      this.clock.setInterval(()=>{
+        void this.frontline?.tick(this.game.scores).catch(error=>
+          console.error('C4 internal battle settlement error',error));
+      },100);
+    }
     this.onMessage('input',(client:Client,input:unknown)=>{
       this.game.submitInput(client.sessionId,input);
     });
@@ -65,11 +81,18 @@ export class MackaFrontlineRoom extends Room {
     const player=this.game.addPlayer(client.sessionId,
       pilot?(pilot.factionId==='TR'?'blue':'red'):undefined);
     this.guestIds.set(client.sessionId,identity.sub);
+    if(pilot)this.pilotFactions.set(client.sessionId,pilot.factionId);
     client.send('welcome',{sessionId:client.sessionId,team:player.team,
       pilotId:pilot?.sub??null,factionId:pilot?.factionId??null,
       roomId:this.roomId,mapId:this.mapId,protocolVersion:1,maxClients:30});
     client.send('snapshot',this.game.snapshot());
     this.broadcast('joined',{sessionId:client.sessionId,team:player.team});
+    const worldState=this.frontline?.state();
+    if(worldState)client.send('world_state',worldState);
+    if(this.frontline){
+      void this.frontline.tryStart().catch(error=>
+        console.error('C4 could not begin Maçka frontline',error));
+    }
   }
   async onDrop(client:Client):Promise<void>{
     const player=this.game.players.get(client.sessionId);
@@ -84,9 +107,15 @@ export class MackaFrontlineRoom extends Room {
     if(player)client.send('welcome',{sessionId:client.sessionId,team:player.team,
       roomId:this.roomId,mapId:this.mapId,protocolVersion:1,maxClients:30});
     client.send('snapshot',this.game.snapshot());
+    const state=this.frontline?.state();
+    if(state)client.send('world_state',state);
+  }
+  async onDispose():Promise<void>{
+    if(this.frontline)await this.frontline.dispose();
   }
   onLeave(client:Client):void{
     this.guestIds.delete(client.sessionId);
+    this.pilotFactions.delete(client.sessionId);
     this.game.removePlayer(client.sessionId);
     this.broadcast('left',{sessionId:client.sessionId});
   }
