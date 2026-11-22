@@ -1,5 +1,13 @@
 # Paintball Nations 🎨
 
+## ✅ C3 — Kalıcı Cephe / Bölge Fethi Veri Altyapısı
+
+- [C3 uygulaması, transaction kuralları ve kalan entegrasyon](docs/frontline-c3-implementation.md)
+- [PostgreSQL'de başarılı 24/24 test (9 dünya, 6 profil, 9 cephe)](https://github.com/bugsbuny243/paintball-nations/actions/runs/45017167171)
+- Maçın kimliği ve kaynağı, çekişmeli sektör, tek seferlik sonuç, ülke sahipliği geçmişi, kaynak üretiminin yeni ülkeye devri ve maç iptali **sunucu/veritabanı katmanında** uygulandı.
+- **Henüz maç odasına otomatik bağlanmadı.** Colyseus'taki bir gerçek karşılaşmanın bu kayıtları güncellemesi bir sonraki C4 adımıdır. Kamuya açık sunucu bulunmuyor.
+
+
 ## ✅ C2 — Kalıcı oyuncu → Colyseus → PlayCanvas entegrasyonu
 
 - [Çalışan C2 pilot/maç oturumu, test kanıtı ve üretim sınırları](docs/pilot-match-c2.md)
@@ -13,7 +21,7 @@
 - [C1 teknik uygulama, güvenlik sınırları ve test raporu](docs/pilot-c1-implementation.md)
 - [PostgreSQL üzerinde 15/15 başarılı test](https://github.com/bugsbuny243/paintball-nations/actions/runs/45010029239)
 - Rastgele takma isim, sunucuda UUID profil, 14 günlük hash'lenmiş ve iptal edilebilir yerel geliştirme oturumu; yalnız oyuncunun bağlı olduğu ülkenin kaynaklarını okuma.
-- **Yayın durumu:** C1 henüz PlayCanvas arayüzü veya Colyseus oturumuna bağlanmadı; canlı sunucuda çalışmıyor. A3 biletsiz giriş hatası ve gerçek hesap kurtarma/izin sistemi tamamlanmadan kamuya açık dağıtım yapılmayacak.
+- **Aşama notu:** C1 profil çekirdeği C2 geliştirme bağlantısıyla PlayCanvas/Colyseus'a bağlandı; yine de kamusal canlı sunucu yok. A3 biletsiz giriş hatası ve gerçek hesap kurtarma/izin sistemi tamamlanmadan yayın yapılmayacak.
 
 
 ## 🧠 Çekirdek Oyun Sistemleri V1 — Kalıcı Dünya Ürün Tasarımı
