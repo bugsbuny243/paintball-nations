@@ -1,5 +1,15 @@
 # Paintball Nations 🎨
 
+## ✅ C4 — Maçka çevrim içi maç → kalıcı bölge sonucu
+
+- [C4 uygulama ve sınırlar: Colyseus otoriter sonuç, PostgreSQL sektör devri, dünya HUD bildirimi](docs/frontline-c4-room-integration.md)
+- [8/8 başarılı Colyseus ağ testi ve 2 Chrome/PlayCanvas regresyonu](https://github.com/bugsbuny243/paintball-nations/actions/runs/45018585732)
+- Geçerli TR/DE pilotları aynı odaya girdiğinde geliştirme modu sektörü çekişmeli başlatır. Maç sonu **sunucunun tuttuğu ve kilitlediği skor** üzerinden sonuç C3 PostgreSQL işlemiyle bölgeye uygulanır. Beraberlikte sektör korunur; `world_state` sonucu oyun HUD’una yayınlanır.
+- **Varsayılan olarak kapalı:** Yalnız `DEV_ENABLE_FRONTLINES=1` + `DEV_REQUIRE_PILOT=1` olan *yerel geliştirme* odasında çalışır. Normal misafir ve çevrim dışı Maçka korunmuştur.
+- **Açık güvenlik sorunu:** Geçersiz Colyseus matchmaking isteğinin reddindeki `ERR_HTTP_HEADERS_SENT` hâlâ çözülmedi; bu aşama üretime veya halka açık sunucuya dağıtılmadı.
+- Yalnız tek test sektörü var; 30 gerçek bağlantı, gerçek Android ve C4 HUD görsel testi, botlar ve stratejik kontrol noktaları henüz tamamlanmadı.
+
+
 ## ✅ C3 — Kalıcı Cephe / Bölge Fethi Veri Altyapısı
 
 - [C3 uygulaması, transaction kuralları ve kalan entegrasyon](docs/frontline-c3-implementation.md)
