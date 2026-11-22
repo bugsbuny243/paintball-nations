@@ -4,6 +4,8 @@
  */
 import {Room, ServerError, type Client} from 'colyseus';
 import {verifyGuestTicket, type GuestClaims} from '../auth/guest-ticket.ts';
+import {verifyPilotMatchTicket, type PilotMatchClaims} from '../auth/pilot-match-ticket.ts';
+import {developmentPilotStore} from '../auth/dev-pilot-db.ts';
 import {readFileSync} from 'node:fs';
 import {MackaSimulation,type CollisionMap} from './macka-simulation.ts';
 
@@ -15,11 +17,25 @@ export class MackaFrontlineRoom extends Room {
   readonly mapId='TR-MACKA';
   readonly game=new MackaSimulation(geo);
   readonly guestIds=new Map<string,string>();
-  async onAuth(_client:Client,options:unknown):Promise<GuestClaims|false> {
-    const candidate=options&&typeof options==='object'
-      ?(options as Record<string,unknown>).guestTicket:undefined;
-    // Instance admission runs after reservation and is still server authoritative.
-    return verifyGuestTicket(candidate) || false;
+  async onAuth(_client:Client,options:unknown):Promise<GuestClaims|PilotMatchClaims|false> {
+    const opts=options&&typeof options==='object'
+      ?options as Record<string,unknown>:{};
+    if(opts.matchTicket!==undefined){
+      const identity=verifyPilotMatchTicket(opts.matchTicket);
+      const db=developmentPilotStore();
+      if(!identity||!db)return false;
+      try {
+        const active=await db.isMatchSessionActive({
+          pilotId:identity.sub,sessionId:identity.sid,factionId:identity.factionId
+        });
+        return active?identity:false;
+      }catch{
+        // Database outage must not silently admit an unverified pilot.
+        return false;
+      }
+    }
+    if(process.env.DEV_REQUIRE_PILOT==='1')return false;
+    return verifyGuestTicket(opts.guestTicket)||false;
   }
   onCreate():void{
     this.onMessage('input',(client:Client,input:unknown)=>{
@@ -35,13 +51,16 @@ export class MackaFrontlineRoom extends Room {
     },100);
   }
   onJoin(client:Client):void{
-    const guest=client.auth as GuestClaims | undefined;
-    if(!guest?.sub)throw new ServerError(401,'guest_ticket_required');
-    if(Array.from(this.guestIds.values()).includes(guest.sub))
-      throw new ServerError(409,'guest_already_in_room');
-    const player=this.game.addPlayer(client.sessionId);
-    this.guestIds.set(client.sessionId,guest.sub);
+    const identity=client.auth as GuestClaims|PilotMatchClaims|undefined;
+    if(!identity?.sub)throw new ServerError(401,'match_ticket_required');
+    if(Array.from(this.guestIds.values()).includes(identity.sub))
+      throw new ServerError(409,'identity_already_in_room');
+    const pilot='factionId' in identity?identity as PilotMatchClaims:null;
+    const player=this.game.addPlayer(client.sessionId,
+      pilot?(pilot.factionId==='TR'?'blue':'red'):undefined);
+    this.guestIds.set(client.sessionId,identity.sub);
     client.send('welcome',{sessionId:client.sessionId,team:player.team,
+      pilotId:pilot?.sub??null,factionId:pilot?.factionId??null,
       roomId:this.roomId,mapId:this.mapId,protocolVersion:1,maxClients:30});
     client.send('snapshot',this.game.snapshot());
     this.broadcast('joined',{sessionId:client.sessionId,team:player.team});
