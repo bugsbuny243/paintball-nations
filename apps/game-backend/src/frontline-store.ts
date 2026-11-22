@@ -42,7 +42,7 @@ export interface FrontlineSettlement extends SettleFrontline {
 type BattleRow={
   battle_id:string;sector_id:string;source_room_id:string;
   attacker_faction_id:FactionId;defender_faction_id:FactionId;
-  expected_sector_version:string;status:BattleStatus;
+  expected_sector_version:string;opened_world_version:string|null;status:BattleStatus;
   result:FrontlineSettlement|null;result_hash:string|null;
 };
 type SectorRow={owner_faction_id:FactionId;state:string;version:string};
@@ -112,11 +112,9 @@ export class FrontlineStore {
         const b=found.rows[0];
         if(b.status==='OPEN'&&b.sector_id===x.sectorId&&
            b.source_room_id===x.sourceRoomId&&b.attacker_faction_id===x.attackerFactionId){
-          const v=await db.query<{version:string}>(
-            'SELECT version FROM world_meta WHERE id=TRUE');
           return {...x,defenderFactionId:b.defender_faction_id,
-            sectorVersion:Number(b.expected_sector_version),worldVersion:Number(v.rows[0].version),
-            status:'OPEN'};
+            sectorVersion:Number(b.expected_sector_version),
+            worldVersion:Number(b.opened_world_version),status:'OPEN'};
         }
         throw new WorldError('battle_id_already_used',409);
       }
@@ -145,6 +143,8 @@ export class FrontlineStore {
         'UPDATE world_meta SET version=version+1 WHERE id=TRUE RETURNING version');
       // A world_version represents a globally visible sector-state transition.
       const version=Number(v.rows[0].version);
+      await db.query('UPDATE frontline_battles SET opened_world_version=$2 WHERE battle_id=$1',
+        [x.battleId,version]);
       await db.query(
         'INSERT INTO world_events(version,event_type,payload) VALUES($1,$2,$3::jsonb)',
         [version,'frontline.opened',JSON.stringify({
