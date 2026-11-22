@@ -12,6 +12,7 @@ on:
       - 'maps/macka-viewer.js'
       - 'maps/macka.html'
       - 'tests/online-macka.test.ts'
+      - 'tests/rejected-matchmaking.test.ts'
       - 'tests/pilot-match.test.ts'
       - 'tests/frontline-room.test.ts'
       - 'tests/smoke-online-macka.mjs'
