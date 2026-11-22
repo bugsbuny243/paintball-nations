@@ -23,6 +23,7 @@
     "tests/pilot-profile.test.ts",
     "tests/pilot-match.test.ts",
     "tests/frontline-settlement.test.ts",
+    "tests/frontline-recovery.test.ts",
     "tests/frontline-room.test.ts"
   ]
 }
