@@ -65,6 +65,25 @@ test('A3 two ticketed human sessions join one authoritative Colyseus Maçka room
     await testServer.shutdown();
   }
 });
+test('A3 rejects unauthenticated matchmaking on the real SDK network and remains healthy',
+  {timeout:20000},async()=>{
+  const testServer=await boot(onlineServer);
+  try{
+    const room=await testServer.createRoom('macka_frontline');
+    await assert.rejects(testServer.connectTo(room,{}),
+      /auth|reject|invalid|match|525|401|forbidden/i);
+    await assert.rejects(testServer.connectTo(room,{guestTicket:'forged-ticket'}),
+      /auth|reject|invalid|match|525|401|forbidden/i);
+    // Denied joins must not crash the matchmaker or occupy a room slot.
+    const accepted=await testServer.connectTo(room,{guestTicket:issueGuestTicket().ticket});
+    assert.equal(room.game.snapshot().players.length,1);
+    assert.equal(room.game.snapshot().playerCounts.blue,1);
+    await accepted.leave();
+  }finally{
+    await testServer.shutdown();
+  }
+});
+
 test('A2 game simulation rejects client position, invalid values and untrusted score',()=>{
   assert.equal(normalizeInput({seq:1,mx:10000,mz:0,yaw:0,pitch:0,fire:false}),null);
   assert.equal(normalizeInput({seq:1,mx:NaN,mz:0,yaw:0,pitch:0,fire:false}),null);
