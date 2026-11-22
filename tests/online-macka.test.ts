@@ -134,3 +134,27 @@ test('A3 room entry hook denies missing and forged guest passes',async()=>{
   assert.ok(valid);
   assert.equal(valid.aud,'pbn-macka-development');
 });
+
+
+test('A3 rejects invalid matchmaking at HTTP edge without room changes',{timeout:20000},async()=>{
+  const testServer=await boot(onlineServer);
+  try{
+    const room=await testServer.createRoom('macka_frontline');
+    const attempts=[
+      {},
+      {guestTicket:'forged-ticket'},
+      {guestTicket:issueGuestTicket(Date.now()-20*60*1000).ticket}
+    ];
+    for(const options of attempts){
+      await assert.rejects(()=>testServer.connectTo(room,options));
+      assert.equal(room.game.snapshot().players.length,0);
+      assert.equal(room.guestIds.size,0);
+    }
+    // The rejection path must not break subsequent valid matchmaking.
+    const valid=await testServer.connectTo(room,{
+      guestTicket:issueGuestTicket().ticket
+    });
+    assert.equal(room.game.snapshot().players.length,1);
+    await valid.leave();
+  }finally{await testServer.shutdown();}
+});
