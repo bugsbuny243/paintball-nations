@@ -1,5 +1,12 @@
 # Paintball Nations 🎨
 
+## 🧠 Çekirdek Oyun Sistemleri V1 — Kalıcı Dünya Ürün Tasarımı
+
+- [Tam tasarım: Üs Endüstrisi, Stratejik Kariyer, Ülke Ligleri, Özel Operasyonlar, Komuta Çubuğu, botlar ve 15v15](docs/paintball-nations-core-systems-v1.md)
+- **Tasarımdır; uygulandı anlamına gelmez.** Mevcut A1 ekonomi ve A2/A3 çevrim içi prototipleri korunuyor. OldOrbit ekranlarından çıkarılan mekanik ilkeler kopyalanmadan özgün Paintball Nations kurallarına dönüştürülmüştür.
+- Güncel teknik üst mimari: [Kalıcı Dünya V2](docs/world-architecture-v2.md). A3 kimlik reddetme bloklayıcısı çözülmeden kamusal sunucu açılmaz.
+
+
 ## 🔐 A3 — Geliştirme misafir biletleri / doğrulanmış pozitif bağlantı
 
 - [A3 kodu, test sonuçları ve çözülmemiş güvenlik bloklayıcısı](docs/guest-session-a3.md)
