@@ -167,15 +167,15 @@ test('C2 two PostgreSQL-backed pilots join with faction-derived teams and expiri
   const server=await boot(onlineServer);
   try{
     const room=await server.createRoom('macka_frontline');
-    const preflightTR=await room.onAuth(null as never,{matchTicket:blueTicket.ticket});
-    const preflightDE=await room.onAuth(null as never,{matchTicket:redTicket.ticket});
+    const preflightTR=await room.onAuth(null as never,{pilotPass:blueTicket.ticket});
+    const preflightDE=await room.onAuth(null as never,{pilotPass:redTicket.ticket});
     assert.ok(preflightTR,'C2 TR match ticket failed room validation');
     assert.ok(preflightDE,'C2 DE match ticket failed room validation');
     assert.equal(preflightTR.factionId,'TR');
     assert.equal(preflightDE.factionId,'DE');
     console.log('C2 TRACE: signed pilots validated by PostgreSQL room hook');
-    const blue=await server.connectTo(room,{matchTicket:blueTicket.ticket});
-    const red=await server.connectTo(room,{matchTicket:redTicket.ticket});
+    const blue=await server.connectTo(room,{pilotPass:blueTicket.ticket});
+    const red=await server.connectTo(room,{pilotPass:redTicket.ticket});
     assert.equal(blue.roomId,red.roomId);
     const snap=room.game.snapshot() as BattleSnapshot;
     assert.equal(snap.playerCounts.blue,1);
@@ -185,12 +185,12 @@ test('C2 two PostgreSQL-backed pilots join with faction-derived teams and expiri
     assert.equal(room.game.players.get(red.sessionId)!.team,'red');
     assert.equal(room.guestIds.get(blue.sessionId),tr.profile.id);
     assert.equal(room.guestIds.get(red.sessionId),de.profile.id);
-    assert.equal((await room.onAuth(null as never,{matchTicket:blueTicket.ticket}))?.sub,tr.profile.id);
-    assert.equal(await room.onAuth(null as never,{matchTicket:redTicket.ticket+'x'}),false);
+    assert.equal((await room.onAuth(null as never,{pilotPass:blueTicket.ticket}))?.sub,tr.profile.id);
+    assert.equal(await room.onAuth(null as never,{pilotPass:redTicket.ticket+'x'}),false);
     assert.equal(await store.logout(tr.sessionToken),true);
     // A revoked database session must be rejected for new admission.
-    assert.equal(await room.onAuth(null as never,{matchTicket:blueTicket.ticket}),false);
-    assert.notEqual(await room.onAuth(null as never,{matchTicket:redTicket.ticket}),false);
+    assert.equal(await room.onAuth(null as never,{pilotPass:blueTicket.ticket}),false);
+    assert.notEqual(await room.onAuth(null as never,{pilotPass:redTicket.ticket}),false);
     await blue.leave();
     await red.leave();
   }finally{
