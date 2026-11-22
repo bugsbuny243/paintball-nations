@@ -11,11 +11,12 @@
     "world:serve": "tsx apps/game-backend/src/server.ts",
     "world:check": "tsc --noEmit",
     "world:test": "tsx --test tests/world-core.test.ts",
-    "world:verify": "npm run world:check && npm run world:test",
+    "world:verify": "npm run world:check && npm run world:test && npm run pilot:test",
     "online:serve": "tsx apps/game-backend/src/online-server.ts",
     "online:build": "esbuild maps/macka-online-client.js --bundle --minify --format=iife --platform=browser --target=es2020 --outfile=maps/macka-online.bundle.js",
     "online:test": "tsx --test tests/online-macka.test.ts",
-    "online:verify": "npm run world:check && npm run online:build && npm run online:test"
+    "online:verify": "npm run world:check && npm run online:build && npm run online:test",
+    "pilot:test": "tsx --test tests/pilot-profile.test.ts"
   },
   "dependencies": {
     "pg": "^8.23.1",
