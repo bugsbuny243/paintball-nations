@@ -3,9 +3,10 @@
  * NEVER publicly deploy as a production game; the process blocks NODE_ENV=production.
  */
 import {defineRoom,defineServer} from 'colyseus';
+import express from 'express';
 import {pathToFileURL} from 'node:url';
 import {MackaFrontlineRoom} from './rooms/macka-room.ts';
-import {issueGuestTicket} from './auth/guest-ticket.ts';
+import {issueGuestTicket,verifyGuestTicket} from './auth/guest-ticket.ts';
 
 type GuestRequest={
   headers:{origin?:string};
@@ -37,6 +38,21 @@ export const onlineServer=defineServer({
     macka_frontline:defineRoom(MackaFrontlineRoom)
   },
   express:(app)=>{
+    // Bind *before* the Colyseus router: fail bad matchmaking at the HTTP edge.
+    // This avoids the @colyseus/better-call ERR_HTTP_HEADERS_SENT rejection path.
+    app.use('/matchmake',
+      express.json({limit:'4kb',strict:true}),
+      (req,res,next)=>{
+        if(req.method!=='POST')return next();
+        const ticket=req.body && typeof req.body==='object'
+          ?(req.body as Record<string,unknown>).guestTicket:undefined;
+        if(!verifyGuestTicket(ticket)){
+          res.status(401).json({error:'guest_ticket_invalid_or_expired'});
+          return;
+        }
+        next();
+      }
+    );
     app.options('/api/v1/guest-ticket',(req:GuestRequest,res:GuestResponse)=>{
       const origin=req.headers.origin;
       if(origin && !permittedOrigins.has(origin)){res.status(403).end();return;}
