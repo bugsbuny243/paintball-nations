@@ -74,6 +74,13 @@ jobs:
           done
           node tests/smoke-online-macka.mjs
           node tests/smoke-online-pilot.mjs
+      - name: Print local test server diagnostics on failure
+        if: failure()
+        run: |
+          echo "---- Local Colyseus server diagnostics ----"
+          tail -n 50 /tmp/pbn-server.log || true
+          echo "---- Local static HTTP diagnostics ----"
+          tail -n 25 /tmp/pbn-web.log || true
       - name: Commit browser bundle after tests pass
         run: |
           git config user.name "github-actions[bot]"
