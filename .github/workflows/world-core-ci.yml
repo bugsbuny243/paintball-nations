@@ -55,4 +55,6 @@ jobs:
           npm run world:migrate
           npm run world:migrate
       - name: Run real PostgreSQL concurrency and API tests
-        run: npm run world:test
+        run: |
+          npm run world:test
+          npm run pilot:test
