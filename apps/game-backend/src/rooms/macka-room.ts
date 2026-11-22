@@ -60,10 +60,12 @@ export class MackaFrontlineRoom extends Room {
       },100);
     }
     this.onMessage('input',(client:Client,input:unknown)=>{
+      if(this.frontline?.isRoundLocked())return;
       this.game.submitInput(client.sessionId,input);
     });
     // Deliberately reject arbitrary score/position messages: only input is accepted.
     this.clock.setInterval(()=>{
+      if(this.frontline?.isRoundLocked())return;
       const events=this.game.step(.05);
       for(const event of events)this.broadcast('paint_hit',event);
     },50);
