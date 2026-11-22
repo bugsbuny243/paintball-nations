@@ -141,14 +141,11 @@ test('A3 guest tickets reject missing, tampered and expired payloads',()=>{
 });
 
 test('A3 room entry hook denies missing and forged guest passes',async()=>{
-  // Colyseus 0.18.10 test harness has an ERR_HTTP_HEADERS_SENT failure on rejected
-  // matchmaking requests. Exercise the real room guard directly until resolved.
-  // This is NOT a successful negative-network-integration test.
+  // The real SDK denial path is tested above; keep a direct guard unit check.
   const room=new MackaFrontlineRoom();
-  const none=await room.onAuth(null as never,{});
-  assert.equal(none,false);
-  const bad=await room.onAuth(null as never,{guestTicket:'forged-ticket'});
-  assert.equal(bad,false);
+  await assert.rejects(room.onAuth(null as never,{}),/invalid_guest_ticket/);
+  await assert.rejects(room.onAuth(null as never,{guestTicket:'forged-ticket'}),
+    /invalid_guest_ticket/);
   const valid=await room.onAuth(null as never,{guestTicket:issueGuestTicket().ticket});
   assert.ok(valid);
   assert.equal(valid.aud,'pbn-macka-development');
