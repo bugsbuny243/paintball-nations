@@ -55,10 +55,10 @@ test('C2 two PostgreSQL-backed pilots join with faction-derived teams and expiri
     assert.equal(room.guestIds.get(blue.sessionId),tr.profile.id);
     assert.equal(room.guestIds.get(red.sessionId),de.profile.id);
     assert.equal((await room.onAuth(null as never,{pilotPass:blueTicket.ticket}))?.sub,tr.profile.id);
-    await assert.rejects(room.onAuth(null as never,{pilotPass:redTicket.ticket+'x'}),/invalid_match_ticket/);
+    assert.equal(await room.onAuth(null as never,{pilotPass:redTicket.ticket+'x'}),false);
     assert.equal(await store.logout(tr.sessionToken),true);
     // A revoked database session must be rejected for new admission.
-    await assert.rejects(room.onAuth(null as never,{pilotPass:blueTicket.ticket}),/inactive_pilot_session/);
+    assert.equal(await room.onAuth(null as never,{pilotPass:blueTicket.ticket}),false);
     assert.notEqual(await room.onAuth(null as never,{pilotPass:redTicket.ticket}),false);
     await blue.leave();
     await red.leave();
