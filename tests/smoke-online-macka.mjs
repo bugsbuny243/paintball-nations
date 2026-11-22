@@ -9,20 +9,37 @@ const browser=await chromium.launch({
   executablePath:process.env.CHROME_BIN||undefined,
   args:['--enable-webgl','--use-gl=angle','--use-angle=swiftshader','--disable-gpu-sandbox']
 });
-const errors=[];
+const errors=[],httpErrors=[];
+function diagnostics(label,page){
+  page.on('response',r=>{
+    if(r.status()>=400)httpErrors.push(label+' HTTP '+r.status()+' '+new URL(r.url()).pathname);
+  });
+  page.on('console',msg=>{
+    if(msg.type()==='error')errors.push(label+' console: '+msg.text());
+  });
+}
+async function waitForGuest(page,label){
+  try{
+    await page.waitForFunction(()=>document.querySelector('#online-state')?.textContent?.includes('Misafir bağlandı'),
+      null,{timeout:20000});
+  }catch(error){
+    const state=await page.locator('#online-state').textContent().catch(()=>null);
+    console.error('A3 browser '+label+' guest status:',state,'http:',httpErrors,'browser:',errors);
+    throw error;
+  }
+}
 const url='http://127.0.0.1:8765/maps/macka.html?online=1';
 const context=await browser.newContext({viewport:{width:960,height:540},deviceScaleFactor:1});
 const a=await context.newPage(), b=await context.newPage();
 for(const [label,page] of [['blue',a],['red',b]]){
   page.on('pageerror',err=>errors.push(label+': '+err.message));
+  diagnostics(label,page);
 }
 try{
   await a.goto(url,{waitUntil:'domcontentloaded',timeout:30000});
-  await a.waitForFunction(()=>document.querySelector('#online-state')?.textContent?.includes('Misafir bağlandı'),
-    null,{timeout:45000});
+  await waitForGuest(a,'blue');
   await b.goto(url,{waitUntil:'domcontentloaded',timeout:30000});
-  await b.waitForFunction(()=>document.querySelector('#online-state')?.textContent?.includes('Misafir bağlandı'),
-    null,{timeout:45000});
+  await waitForGuest(b,'red');
   for(const page of [a,b]){
     await page.waitForFunction(()=>{
       const text=document.querySelector('#online-teams')?.textContent||'';
