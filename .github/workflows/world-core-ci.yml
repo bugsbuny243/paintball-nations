@@ -7,6 +7,7 @@ on:
       - 'apps/game-backend/**'
       - 'packages/protocol/**'
       - 'tests/world-core.test.ts'
+      - 'tests/frontline-recovery.test.ts'
       - 'tests/online-macka.test.ts'
       - 'package.json'
       - 'tsconfig.json'
@@ -59,3 +60,4 @@ jobs:
           npm run world:test
           npm run pilot:test
           npm run frontline:test
+          npm run frontline:recovery:test
