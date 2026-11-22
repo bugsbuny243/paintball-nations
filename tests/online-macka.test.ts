@@ -12,6 +12,57 @@ import {MackaSimulation,normalizeInput,type BattleSnapshot} from '../apps/game-b
 import {readFileSync} from 'node:fs';
 const geo=JSON.parse(readFileSync(new URL('../maps/istanbul-macka.json',import.meta.url),'utf8')) as {buildings:{p:number[][]}[]};
 
+test('A3 rejects unauthenticated matchmaking on the real SDK network and remains healthy',
+  {timeout:20000},async()=>{
+
+  // Diagnostic only: identify the FIRST response writer; never log credentials.
+  const {ServerResponse}=await import('node:http');
+  const proto=ServerResponse.prototype;
+  const writeDescriptor=Object.getOwnPropertyDescriptor(proto,'writeHead');
+  const setDescriptor=Object.getOwnPropertyDescriptor(proto,'setHeader');
+  const endDescriptor=Object.getOwnPropertyDescriptor(proto,'end');
+  const originalWrite=proto.writeHead,originalSet=proto.setHeader,originalEnd=proto.end;
+  let writes=0;
+  Object.defineProperty(proto,'writeHead',{configurable:true,writable:true,
+    value:function(this:import('node:http').ServerResponse,...args:unknown[]){
+      if(this.req?.url?.startsWith('/matchmake/')&&writes++<12)
+        console.error('PBN TRACE writeHead',{path:this.req.url,status:args[0],headersSent:this.headersSent,
+          caller:new Error().stack?.split('\\n').slice(2,6).join(' | ')});
+      return Reflect.apply(originalWrite,this,args);
+    }});
+  Object.defineProperty(proto,'setHeader',{configurable:true,writable:true,
+    value:function(this:import('node:http').ServerResponse,...args:unknown[]){
+      if(this.headersSent&&this.req?.url?.startsWith('/matchmake/'))
+        console.error('PBN TRACE late setHeader',{path:this.req.url,name:args[0],ended:this.writableEnded});
+      return Reflect.apply(originalSet,this,args);
+    }});
+  Object.defineProperty(proto,'end',{configurable:true,writable:true,
+    value:function(this:import('node:http').ServerResponse,...args:unknown[]){
+      if(this.req?.url?.startsWith('/matchmake/')&&writes<15)
+        console.error('PBN TRACE end',{path:this.req.url,headersSent:this.headersSent,status:this.statusCode,
+          caller:new Error().stack?.split('\\n').slice(2,5).join(' | ')});
+      return Reflect.apply(originalEnd,this,args);
+    }});
+  const testServer=await boot(onlineServer);
+  try{
+    const room=await testServer.createRoom('macka_frontline');
+    await assert.rejects(testServer.connectTo(room,{}),
+      /auth|reject|invalid|match|525|401|forbidden/i);
+    await assert.rejects(testServer.connectTo(room,{guestTicket:'forged-ticket'}),
+      /auth|reject|invalid|match|525|401|forbidden/i);
+    // Denied joins must not crash the matchmaker or occupy a room slot.
+    const accepted=await testServer.connectTo(room,{guestTicket:issueGuestTicket().ticket});
+    assert.equal(room.game.snapshot().players.length,1);
+    assert.equal(room.game.snapshot().playerCounts.blue,1);
+    await accepted.leave();
+  }finally{
+    await testServer.shutdown();
+    if(writeDescriptor)Object.defineProperty(proto,'writeHead',writeDescriptor);
+    if(setDescriptor)Object.defineProperty(proto,'setHeader',setDescriptor);
+    if(endDescriptor)Object.defineProperty(proto,'end',endDescriptor);
+  }
+});
+
 test('A3 two ticketed human sessions join one authoritative Colyseus Maçka room',{timeout:20000},async()=>{
   const testServer=await boot(onlineServer);
   try{
@@ -65,25 +116,6 @@ test('A3 two ticketed human sessions join one authoritative Colyseus Maçka room
     await testServer.shutdown();
   }
 });
-test('A3 rejects unauthenticated matchmaking on the real SDK network and remains healthy',
-  {timeout:20000},async()=>{
-  const testServer=await boot(onlineServer);
-  try{
-    const room=await testServer.createRoom('macka_frontline');
-    await assert.rejects(testServer.connectTo(room,{}),
-      /auth|reject|invalid|match|525|401|forbidden/i);
-    await assert.rejects(testServer.connectTo(room,{guestTicket:'forged-ticket'}),
-      /auth|reject|invalid|match|525|401|forbidden/i);
-    // Denied joins must not crash the matchmaker or occupy a room slot.
-    const accepted=await testServer.connectTo(room,{guestTicket:issueGuestTicket().ticket});
-    assert.equal(room.game.snapshot().players.length,1);
-    assert.equal(room.game.snapshot().playerCounts.blue,1);
-    await accepted.leave();
-  }finally{
-    await testServer.shutdown();
-  }
-});
-
 test('A2 game simulation rejects client position, invalid values and untrusted score',()=>{
   assert.equal(normalizeInput({seq:1,mx:10000,mz:0,yaw:0,pitch:0,fire:false}),null);
   assert.equal(normalizeInput({seq:1,mx:NaN,mz:0,yaw:0,pitch:0,fire:false}),null);
