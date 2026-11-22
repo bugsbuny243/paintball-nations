@@ -1,6 +1,7 @@
 /** Paintball Nations / Maçka A2 connected-client preview.
  * Build: npm run online:build
- * Loads only with ?online=1. Normal offline game is unaffected.
+ * Loads only with ?online=1. For local pilot mode: ?online=1&pilot=1&faction=TR or DE.
+ * Normal offline game is unaffected.
  * No multiplayer server is hosted by this static page.
  */
 import {Client} from '@colyseus/sdk';
@@ -17,7 +18,7 @@ if(new URLSearchParams(location.search).get('online')==='1'){
     const panel=document.createElement('aside');
     panel.id='online-macka-hud';
     panel.innerHTML=[
-      '<strong>🌍 MAÇKA ONLINE · A3 TEST</strong>',
+      '<strong>🌍 MAÇKA ONLINE · C2 TEST</strong>',
       '<span id="online-state">Sunucu bağlantısı kontrol ediliyor…</span>',
       '<span id="online-teams">🔵 0 gerçek oyuncu · 🔴 0 gerçek oyuncu · 🤖 0 bot</span>',
       '<span id="online-score">Skor: 0 - 0</span>',
@@ -117,20 +118,48 @@ if(new URLSearchParams(location.search).get('online')==='1'){
     }
     async function connect(){
       try{
-        status('Güvenli misafir oturumu alınıyor…');
-        const response=await fetch(paramsUrl+'/api/v1/guest-ticket',{
-          method:'POST',cache:'no-store',credentials:'omit'
-        });
-        if(!response.ok)throw new Error('Misafir girişi reddedildi: HTTP '+response.status);
-        const guest=await response.json();
-        if(!guest||typeof guest.ticket!=='string'||!guest.guest) {
-          throw new Error('Oyun sunucusu geçerli misafir bileti döndürmedi');
-        }
         const client=new Client(paramsUrl);
-        status('Bilet doğrulanıyor · Maçka odasına giriliyor…');
-        room=await client.joinOrCreate('macka_frontline',{guestTicket:guest.ticket});
+        if(pilotMode){
+          const faction=params.get('faction')==='DE'?'DE':'TR';
+          const storageKey='pbn-local-dev-pilot-'+faction;
+          let session=sessionStorage.getItem(storageKey);
+          if(!session){
+            status('Yerel test pilotu oluşturuluyor…');
+            const created=await fetch(paramsUrl+'/api/v1/dev-pilot/register?faction='+faction,{
+              method:'POST',cache:'no-store',credentials:'omit'
+            });
+            if(!created.ok)throw new Error('Pilot kayıt hatası: HTTP '+created.status);
+            const pilot=await created.json();
+            if(typeof pilot?.sessionToken!=='string')throw new Error('Pilot kaydı eksik');
+            session=pilot.sessionToken;
+            sessionStorage.setItem(storageKey,session);
+          }
+          status('Kalıcı pilot oturumu doğrulanıyor…');
+          const response=await fetch(paramsUrl+'/api/v1/pilot-match-ticket',{
+            method:'POST',cache:'no-store',credentials:'omit',
+            headers:{Authorization:'Bearer '+session}
+          });
+          if(!response.ok)throw new Error('Pilot oturumu geçersiz: HTTP '+response.status);
+          const pilot=await response.json();
+          if(typeof pilot?.ticket!=='string'||pilot?.profile?.factionId!==faction)
+            throw new Error('Maç bileti veya ülke doğrulaması başarısız');
+          room=await client.joinOrCreate('macka_frontline',{matchTicket:pilot.ticket});
+          panel.dataset.pilotId=pilot.profile.id;
+          panel.dataset.factionId=faction;
+          status('Pilot bağlandı · '+faction+' · '+pilot.profile.displayName);
+        }else{
+          status('Güvenli misafir oturumu alınıyor…');
+          const response=await fetch(paramsUrl+'/api/v1/guest-ticket',{
+            method:'POST',cache:'no-store',credentials:'omit'
+          });
+          if(!response.ok)throw new Error('Misafir girişi reddedildi: HTTP '+response.status);
+          const guest=await response.json();
+          if(!guest||typeof guest.ticket!=='string'||!guest.guest)
+            throw new Error('Oyun sunucusu geçerli misafir bileti döndürmedi');
+          room=await client.joinOrCreate('macka_frontline',{guestTicket:guest.ticket});
+          status('Misafir bağlandı · gerçek hesap değil');
+        }
         connected=true;fire.disabled=false;
-        status('Misafir bağlandı · gerçek hesap değil');
         map.setMode(false);
         map.setExternalControl(true);
         room.onMessage('snapshot',renderSnapshot);
