@@ -23,6 +23,7 @@ if(new URLSearchParams(location.search).get('online')==='1'){
       '<span id="online-state">Sunucu bağlantısı kontrol ediliyor…</span>',
       '<span id="online-teams">🔵 0 gerçek oyuncu · 🔴 0 gerçek oyuncu · 🤖 0 bot</span>',
       '<span id="online-score">Skor: 0 - 0</span>',
+      '<span id="online-frontline" aria-live="polite">🏰 Cephe: çevrim dışı strateji modu</span>',
       '<button id="online-fire" type="button">BOYA!</button>',
       '<div id="online-feedback"></div>'
     ].join('');
@@ -30,6 +31,7 @@ if(new URLSearchParams(location.search).get('online')==='1'){
     const state=panel.querySelector('#online-state');
     const teams=panel.querySelector('#online-teams');
     const score=panel.querySelector('#online-score');
+    const frontline=panel.querySelector('#online-frontline');
     const fire=panel.querySelector('#online-fire');
     const feedback=panel.querySelector('#online-feedback');
     const entities=new Map();
@@ -164,6 +166,19 @@ if(new URLSearchParams(location.search).get('online')==='1'){
         map.setMode(false);
         map.setExternalControl(true);
         room.onMessage('snapshot',renderSnapshot);
+        room.onMessage('world_state',world=>{
+          if(!world||world.sectorId!=='TR-MACKA')return;
+          const owner=world.ownerFactionId==='TR'?'🇹🇷 TR':
+            world.ownerFactionId==='DE'?'🇩🇪 DE':'?';
+          const status=world.state==='CONTESTED'?'⚔️ Çekişmeli':
+            world.outcome==='CAPTURED'?'🏆 Bölge fethedildi':
+            world.outcome==='DEFENDED'?'🛡️ Savunuldu':
+            world.outcome==='DRAW'?'🤝 Beraberlik':'🏰 Kontrol altında';
+          frontline.textContent='Maçka · '+status+' · Sahip: '+owner+
+            ' · Dünya v'+String(world.worldVersion);
+          frontline.dataset.owner=world.ownerFactionId;
+          frontline.dataset.outcome=world.outcome;
+        });
         room.onMessage('paint_hit',event=>{
           feedback.textContent=event.shooterId===room.sessionId?'🎯 İsabet!':'🎨 Boya isabeti';
           setTimeout(()=>{feedback.textContent='';},1100);
