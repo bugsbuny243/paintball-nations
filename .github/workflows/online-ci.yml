@@ -86,6 +86,7 @@ jobs:
           echo "---- Local static HTTP diagnostics ----"
           tail -n 25 /tmp/pbn-web.log || true
       - name: Commit browser bundle after tests pass
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
