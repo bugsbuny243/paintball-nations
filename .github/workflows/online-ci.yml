@@ -1,17 +1,16 @@
-name: Validate A3 Maçka guest-auth multiplayer
+name: Validate C2 Maçka persistent pilot multiplayer
 
 on:
   push:
     branches: [main]
     paths:
-      - 'apps/game-backend/src/online-server.ts'
-      - 'apps/game-backend/src/rooms/**'
-      - 'apps/game-backend/src/auth/**'
+      - 'apps/game-backend/src/**'
       - 'maps/macka-online-client.js'
       - 'maps/macka-viewer.js'
       - 'maps/macka.html'
       - 'tests/online-macka.test.ts'
       - 'tests/smoke-online-macka.mjs'
+      - 'tests/smoke-online-pilot.mjs'
       - 'package.json'
       - 'tsconfig.json'
       - '.github/workflows/online-ci.yml'
@@ -28,6 +27,23 @@ jobs:
   network:
     runs-on: ubuntu-latest
     timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: paintball_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d paintball_ci"
+          --health-interval 3s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/paintball_ci
+      NODE_ENV: test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -39,7 +55,9 @@ jobs:
         run: npm run world:check
       - name: Build browser Colyseus client
         run: npm run online:build
-      - name: Test two real SDK connections and server authority
+      - name: Initialize pilot and persistent world tables
+        run: npm run world:migrate
+      - name: Test real guest and pilot SDK connections and server authority
         run: timeout --signal=TERM --kill-after=5s 70s npm run online:test
       - name: Install lightweight browser automation
         run: npm install --no-save playwright
@@ -54,6 +72,7 @@ jobs:
             sleep 1
           done
           node tests/smoke-online-macka.mjs
+          node tests/smoke-online-pilot.mjs
       - name: Commit browser bundle after tests pass
         run: |
           git config user.name "github-actions[bot]"
