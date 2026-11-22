@@ -11,14 +11,16 @@
     "world:serve": "tsx apps/game-backend/src/server.ts",
     "world:check": "tsc --noEmit",
     "world:test": "tsx --test tests/world-core.test.ts",
-    "world:verify": "npm run world:check && npm run world:test && npm run pilot:test && npm run frontline:test",
+    "world:verify": "npm run world:check && npm run world:test && npm run pilot:test && npm run frontline:test && npm run frontline:recovery:test",
     "online:serve": "tsx apps/game-backend/src/online-server.ts",
     "online:build": "esbuild maps/macka-online-client.js --bundle --minify --format=iife --platform=browser --target=es2020 --outfile=maps/macka-online.bundle.js",
     "online:test": "tsx --test --test-concurrency=1 tests/online-macka.test.ts tests/pilot-match.test.ts tests/frontline-room.test.ts",
     "online:verify": "npm run world:check && npm run online:build && npm run online:test",
     "pilot:test": "tsx --test tests/pilot-profile.test.ts",
     "frontline:test": "tsx --test tests/frontline-settlement.test.ts",
-    "frontline:room:test": "tsx --test tests/frontline-room.test.ts"
+    "frontline:room:test": "tsx --test tests/frontline-room.test.ts",
+    "frontline:recover": "tsx apps/game-backend/src/recover-frontlines.ts",
+    "frontline:recovery:test": "tsx --test tests/frontline-recovery.test.ts"
   },
   "dependencies": {
     "pg": "^8.23.1",

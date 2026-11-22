@@ -1,5 +1,13 @@
 # Paintball Nations 🎨
 
+## 🛠️ C5.1 — Çökme sonrası güvenli cephe kurtarma (geliştirme)
+
+- [C5 teknik uygulama: 30 saniyelik savaş yetkisi, yenileme, süresi dolunca iptal, PostgreSQL eşzamanlılık testi](docs/frontline-c5-recovery.md)
+- [PostgreSQL CI](https://github.com/bugsbuny243/paintball-nations/actions/runs/45039651316) ve [Colyseus/Chrome CI](https://github.com/bugsbuny243/paintball-nations/actions/runs/45039651260) başarılı.
+- Beklenmedik süreç kapanmasında süresi dolan savaş **eski ülke sahibini koruyarak** iptal edilir. Gecikmiş eski sunucu sahte fetih yazamaz. Bu, eski maçın kaldığı yerden devam etmesi değildir.
+- **Henüz kamusal yayın yok:** bağımsız sürekli kurtarma işçisi, üretim hesapları, gerçek Android ve yük/failover testleri eksik. `NODE_ENV=production` kilidi korunur.
+
+
 ## ✅ C4 — Maçka çevrim içi maç → kalıcı bölge sonucu
 
 - [C4 uygulama ve sınırlar: Colyseus otoriter sonuç, PostgreSQL sektör devri, dünya HUD bildirimi](docs/frontline-c4-room-integration.md)

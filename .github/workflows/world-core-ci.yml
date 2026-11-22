@@ -3,10 +3,13 @@ name: Validate persistent world core A1
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
     paths:
       - 'apps/game-backend/**'
       - 'packages/protocol/**'
       - 'tests/world-core.test.ts'
+      - 'tests/frontline-recovery.test.ts'
       - 'tests/online-macka.test.ts'
       - 'package.json'
       - 'tsconfig.json'
@@ -17,7 +20,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: pbn-world-core
+  group: pbn-world-core-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -59,3 +62,4 @@ jobs:
           npm run world:test
           npm run pilot:test
           npm run frontline:test
+          npm run frontline:recovery:test

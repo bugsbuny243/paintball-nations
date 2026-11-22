@@ -12,6 +12,7 @@ const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]
 type FactionId='TR'|'DE';
 type BattleStatus='OPEN'|'SETTLED'|'CANCELLED';
 
+
 export interface StartFrontline {
   battleId:string;
   sectorId:string;
@@ -44,6 +45,8 @@ type BattleRow={
   attacker_faction_id:FactionId;defender_faction_id:FactionId;
   expected_sector_version:string;opened_world_version:string|null;status:BattleStatus;
   result:FrontlineSettlement|null;result_hash:string|null;
+  lease_expires_at:Date|null;
+  lease_active?:boolean;
 };
 type SectorRow={owner_faction_id:FactionId;state:string;version:string};
 function vUUID(raw:unknown,name:string):string{
@@ -130,8 +133,8 @@ export class FrontlineStore {
       await db.query(
         'INSERT INTO frontline_battles('+
         'battle_id,sector_id,source_room_id,attacker_faction_id,'+
-        'defender_faction_id,expected_sector_version,status) '+
-        "VALUES($1,$2,$3,$4,$5,$6,'OPEN')",
+        'defender_faction_id,expected_sector_version,status,lease_expires_at) '+
+        "VALUES($1,$2,$3,$4,$5,$6,'OPEN',clock_timestamp()+interval '30 seconds')",
         [x.battleId,x.sectorId,x.sourceRoomId,x.attackerFactionId,
          sector.owner_faction_id,sector.version]
       );
@@ -162,7 +165,8 @@ export class FrontlineStore {
     const x=normalSettle(raw),incomingHash=hash(x);
     return this.transaction(async db=>{
       const row=await db.query<BattleRow>(
-        'SELECT * FROM frontline_battles WHERE battle_id=$1 FOR UPDATE',[x.battleId]);
+        'SELECT *, lease_expires_at>clock_timestamp() AS lease_active '+
+        'FROM frontline_battles WHERE battle_id=$1 FOR UPDATE',[x.battleId]);
       if(!row.rowCount)throw new WorldError('battle_not_found',404);
       const b=row.rows[0];
       if(b.source_room_id!==x.sourceRoomId)throw new WorldError('wrong_battle_room',403);
@@ -172,6 +176,9 @@ export class FrontlineStore {
         return b.result;
       }
       if(b.status!=='OPEN')throw new WorldError('battle_not_open',409);
+      // A restarted or stalled room must never award a territory capture once
+      // its lease has expired, even before the recovery worker runs.
+      if(!b.lease_active)throw new WorldError('battle_lease_expired',409);
       const validWinner=x.winnerFactionId===b.attacker_faction_id||
         x.winnerFactionId===b.defender_faction_id;
       const scoreWinner=x.attackerScore>x.defenderScore?
@@ -218,6 +225,71 @@ export class FrontlineStore {
         [result.worldVersion,'frontline.settled',JSON.stringify(result)]
       );
       return result;
+    });
+  }
+
+  /** The active room must prove liveness before its short lease lapses.
+   * This intentionally refuses to resurrect an already-expired lease.
+   */
+  async renewLease(battleId:unknown,sourceRoomId:unknown):Promise<boolean>{
+    const id=vUUID(battleId,'battle_id');
+    const room=validateIdentifier(sourceRoomId,'source_room_id');
+    const renewed=await this.pool.query(
+      "UPDATE frontline_battles SET lease_expires_at=clock_timestamp()+interval '30 seconds' "+
+      "WHERE battle_id=$1 AND source_room_id=$2 AND status='OPEN' "+
+      "AND lease_expires_at>clock_timestamp() RETURNING battle_id",
+      [id,room]
+    );
+    return renewed.rowCount===1;
+  }
+
+  /** Reclaim only leases expired according to PostgreSQL's clock.
+   * SKIP LOCKED and row locks make a concurrent heartbeat/settlement/recovery
+   * serialize on the battle row. An expired battle can never transfer territory.
+   * Intended for trusted startup/on-demand recovery, not a public endpoint.
+   */
+  async recoverExpired(limit=10):Promise<Array<{
+    battleId:string;sectorId:string;worldVersion:number;
+  }>>{
+    if(!Number.isSafeInteger(limit)||limit<1||limit>100)
+      throw new WorldError('invalid_recovery_limit',400);
+    return this.transaction(async db=>{
+      const expired=await db.query<BattleRow>(
+        "SELECT * FROM frontline_battles "+
+        "WHERE status='OPEN' AND lease_expires_at<=clock_timestamp() "+
+        "ORDER BY lease_expires_at,battle_id FOR UPDATE SKIP LOCKED LIMIT $1",
+        [limit]
+      );
+      const recovered:Array<{battleId:string;sectorId:string;worldVersion:number}>=[];
+      for(const battle of expired.rows){
+        const sec=await db.query<SectorRow>(
+          'SELECT owner_faction_id,state,version FROM sectors WHERE id=$1 FOR UPDATE',
+          [battle.sector_id]
+        );
+        if(!sec.rowCount||sec.rows[0].state!=='CONTESTED'||
+           sec.rows[0].owner_faction_id!==battle.defender_faction_id)
+          throw new WorldError('battle_sector_state_changed',409);
+        await db.query(
+          "UPDATE sectors SET state='OWNED',version=version+1 WHERE id=$1",
+          [battle.sector_id]
+        );
+        await db.query(
+          "UPDATE frontline_battles SET status='CANCELLED',settled_at=clock_timestamp() "+
+          "WHERE battle_id=$1",[battle.battle_id]
+        );
+        const version=await db.query<{version:string}>(
+          'UPDATE world_meta SET version=version+1 WHERE id=TRUE RETURNING version'
+        );
+        const worldVersion=Number(version.rows[0].version);
+        await db.query(
+          'INSERT INTO world_events(version,event_type,payload) VALUES($1,$2,$3::jsonb)',
+          [worldVersion,'frontline.cancelled',JSON.stringify({
+            battleId:battle.battle_id,sectorId:battle.sector_id,reason:'lease_expired'
+          })]
+        );
+        recovered.push({battleId:battle.battle_id,sectorId:battle.sector_id,worldVersion});
+      }
+      return recovered;
     });
   }
 
