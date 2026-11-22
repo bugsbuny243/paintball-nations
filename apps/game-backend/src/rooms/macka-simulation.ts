@@ -84,11 +84,12 @@ export class MackaSimulation {
   count(team:Team):number{
     return Array.from(this.players.values()).filter(p=>p.team===team).length;
   }
-  addPlayer(id:string):Avatar{
+  addPlayer(id:string,preferredTeam?:Team):Avatar{
     if(!id||this.players.has(id))throw new Error('duplicate_or_missing_session');
     const blue=this.count('blue'),red=this.count('red');
     if(blue+red>=30)throw new Error('room_full');
-    const team:Team=blue<=red?'blue':'red', slot=this.count(team);
+    const team:Team=preferredTeam??(blue<=red?'blue':'red');
+    const slot=this.count(team);
     if(slot>=MAX_PLAYERS_PER_TEAM)throw new Error('team_full');
     let x=((slot%5)-2)*3,z=team==='blue'?44:-44;
     // Deterministic spawn lookup avoids real OSM building footprints.
