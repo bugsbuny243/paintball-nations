@@ -21,7 +21,7 @@ export class MackaFrontlineRoom extends Room {
   readonly guestIds=new Map<string,string>();
   readonly pilotFactions=new Map<string,FactionId>();
   private frontline:FrontlineLifecycle|null=null;
-  async onAuth(_client:Client,options:unknown):Promise<GuestClaims|PilotMatchClaims> {
+  async onAuth(_client:Client,options:unknown):Promise<GuestClaims|PilotMatchClaims|false> {
     const opts=options&&typeof options==='object'
       ?options as Record<string,unknown>:{};
     if(opts.pilotPass!==undefined){
@@ -29,26 +29,23 @@ export class MackaFrontlineRoom extends Room {
       const db=developmentPilotStore();
       if(!identity||!db){
         if(process.env.NODE_ENV==='test')console.log('C2 room admission denied: invalid signature or DB unavailable');
-        throw new ServerError(401,'invalid_match_ticket');
+        return false;
       }
       try {
         const active=await db.isMatchSessionActive({
           pilotId:identity.sub,sessionId:identity.sid,factionId:identity.factionId
         });
         if(process.env.NODE_ENV==='test')console.log('C2 room admission DB active:',active,'faction:',identity.factionId);
-        if(!active)throw new ServerError(401,'inactive_pilot_session');
-        return identity;
+        return active?identity:false;
       }catch(error){
         if(process.env.NODE_ENV==='test')console.error('C2 room admission DB error:',error);
         // Database outage must not silently admit an unverified pilot.
-        throw new ServerError(503,'pilot_identity_unavailable');
+        return false;
       }
     }
     if(process.env.DEV_REQUIRE_PILOT==='1'||process.env.DEV_ENABLE_FRONTLINES==='1')
-      throw new ServerError(401,'pilot_ticket_required');
-    const guest=verifyGuestTicket(opts.guestTicket);
-    if(!guest)throw new ServerError(401,'invalid_guest_ticket');
-    return guest;
+      return false;
+    return verifyGuestTicket(opts.guestTicket)||false;
   }
   onCreate():void{
     if(process.env.DEV_ENABLE_FRONTLINES==='1'){
