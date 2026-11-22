@@ -1,7 +1,7 @@
 # Paintball Nations — A3 Geçici Oyun Oturumu Altyapısı
 
 **Tarih:** 20 Kasım 2026  
-**Durum:** Geliştirme ortamındaki misafir bileti ve PlayCanvas/Colyseus bağlantısı uygulandı; otomatik pozitif bağlantı ve imza testleri geçti. **Üretime dağıtılmadı.**
+**Durum:** Geliştirme ortamındaki misafir bileti ve PlayCanvas/Colyseus bağlantısı uygulandı. **22 Kasım 2026 güncellemesi:** İzole süreçte gerçek ağ negatif testleri, iptal edilmiş pilot girişi ve hatalı HTTP oda isteği kontrolü [9/9 başarılı CI](https://github.com/bugsbuny243/paintball-nations/actions/runs/45038047401) ile doğrulandı. **Üretime dağıtılmadı.**
 
 ## Kod ve davranış
 
@@ -26,11 +26,11 @@
 
 **Kanıtlanmayanlar:** Uzak internet koşulları, Android donanımı, 30 gerçek eşzamanlı WebSocket bağlantısı, hesap güvenliği, uzun oturum süresi, yeniden bağlantı ve üretim ölçeği.
 
-## Açık bloklayıcı — Colyseus reddetme yolu
+## Tarihsel hata ve yeni ağ testi — Colyseus reddetme yolu
 
-Colyseus 0.18.10 ve seçili test altyapısında, SDK'nın geçersiz/biletsiz oda girişinin reddedilmesini uçtan uca sınayan testte `ERR_HTTP_HEADERS_SENT: Cannot remove headers after they are sent to the client` üretildi. Bu hata static ve instance `onAuth` reddetme yöntemiyle görüldü. Çalışan süreci kilitleyebildiğinden söz konusu negatif ağ testi şimdilik CI'dan çıkarıldı ve yerine gerçek oda doğrulama fonksiyonunun **doğrudan testi** kullanıldı.
+İlk A3 testi, aynı Node test işçisinde Colyseus sunucusunu art arda başlatıp kapatınca `ERR_HTTP_HEADERS_SENT: Cannot remove headers after they are sent to the client` üretti. Kod taramasında `@colyseus/better-call` yanıt adaptörünün başlıklar gönderildikten sonra temizleme denemesiyle hata yükselttiği görüldü. Test odasının ilk reddedilen bağlantıdan sonra otomatik kapatılması da sonraki isteğin `522 room not found` almasına yol açtı. Yeni regresyon testinde *tek sunucu başlangıcı / test süreci* kullanılıyor ve geçerli oyuncu odada tutuluyor; eksik/sahte bilet ve bilinmeyen oda istekleri ağda reddedildi, ardından sunucu sağlıklı kaldı. PostgreSQL oturumu iptal edilmiş pilotun yeniden bağlanması da ağ testinde reddedildi.
 
-**Bunun anlamı:** Sunucu üretime hazır veya kötü niyetli istemcilere dirençli olarak değerlendirilemez. Açık sorun çözülmeden / geçersiz bağlantılarla gerçek HTTP ve WebSocket negatif test geçmeden açık internete dağıtım yapılmamalıdır. Bu bloklayıcı saklanmış/çözülmüş değildir.
+**Bunun anlamı:** Normal bir geliştirme sürecinde ağ reddetme akışı artık testle doğrulanıyor; ancak önceki çoklu `boot()` hatası ve yeniden başlatma/çökme gibi operasyonel senaryolar için genel bir kütüphane düzeltmesi kanıtlanmış değildir. Gerçek hesap/ban/moderasyon, rate limit, Android, yük testi ve 24/7 operasyon eksiktir. Başarılı tek-süreç testleri **kamusal üretim onayı değildir**.
 
 ## Üretim güvenliği sınırları
 
@@ -43,7 +43,7 @@ Colyseus 0.18.10 ve seçili test altyapısında, SDK'nın geçersiz/biletsiz oda
 
 ## Sonraki mühendislik kararı
 
-1. **Önce bloklayıcıyı çöz:** Colyseus sürümü ve matchmaker HTTP error handler ile biletsiz/uydurma bilet girişinin güvenli biçimde reddedildiğini gerçek ağ seviyesinde doğrula.
+1. **Reddetme dayanıklılığını genişlet:** Tek başlangıçta geçen negatif ağ testlerine ek olarak tekrar başlatma, süreç çökmesi, bağlantı kesilmesi ve eşzamanlı bozuk istek testlerini ayrı süreçlerle doğrula.
 2. Ardından gerçek oyuncu hesapları/oturum iptali ve yetkili maç katılımını PostgreSQL kayıtlarına bağla.
 3. Test yükünü 30 gerçek bağlantıya artır; sonra gerçek Android'de 3D FPS ve gecikme ölçümleri yap.
 4. Bu parçalar tamamlanmadan 24/7 maliyetli sunucu veya kamusal erişim açma.
