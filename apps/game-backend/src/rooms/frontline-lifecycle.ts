@@ -48,6 +48,7 @@ export class FrontlineLifecycle {
   private closed=false;
   private pending:Promise<void>|null=null;
   private finishing:Promise<FrontlineSettlement|null>|null=null;
+  private finalScores:Scores|null=null;
   private latest:FrontlineWorldState|null=null;
   private readonly store:FrontlineStore;
   private readonly world:WorldStore;
@@ -62,6 +63,7 @@ export class FrontlineLifecycle {
     this.world=new WorldStore(db.pool);
   }
   state():FrontlineWorldState|null{return this.latest;}
+  isRoundLocked():boolean{return this.finalScores!==null;}
   async tryStart():Promise<void>{
     if(this.closed||this.opened||this.pending)return this.pending??Promise.resolve();
     const teams=this.participants();
@@ -101,10 +103,14 @@ export class FrontlineLifecycle {
     if(this.finishing)return this.finishing;
     if(!this.opened||this.closed)return null;
     const opened=this.opened;
+    // Freeze the authoritative score once. A transient database error must not
+    // change the eventual winner on retry while the world is still contested.
+    if(!this.finalScores)this.finalScores={blue:scores.blue,red:scores.red};
+    const frozen=this.finalScores;
     const task=(async():Promise<FrontlineSettlement|null>=>{
       const valid=(v:number)=>Number.isSafeInteger(v)&&v>=0&&v<=1000000;
-      const attackerScore=opened.attackerFactionId==='TR'?scores.blue:scores.red;
-      const defenderScore=opened.defenderFactionId==='TR'?scores.blue:scores.red;
+      const attackerScore=opened.attackerFactionId==='TR'?frozen.blue:frozen.red;
+      const defenderScore=opened.defenderFactionId==='TR'?frozen.blue:frozen.red;
       if(!valid(attackerScore)||!valid(defenderScore)||
          attackerScore===defenderScore||!this.hasTwoTeams()){
         const outcome=attackerScore===defenderScore?'DRAW':'CANCELLED';
