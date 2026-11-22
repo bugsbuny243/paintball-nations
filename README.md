@@ -1,5 +1,13 @@
 # Paintball Nations 🎨
 
+## ✅ C2 — Kalıcı oyuncu → Colyseus → PlayCanvas entegrasyonu
+
+- [Çalışan C2 pilot/maç oturumu, test kanıtı ve üretim sınırları](docs/pilot-match-c2.md)
+- [7/7 ağ ve oyun kuralı testi + iki gerçek Chrome'da kalıcı pilot bağlantısı](https://github.com/bugsbuny243/paintball-nations/actions/runs/45016303715)
+- Sunucu doğrulanmış TR/DE pilot kimliği ve 90 saniyelik maç bileti; ülkeye göre takım atama ve oturum iptali testi tamamlandı.
+- **Henüz canlı oyun değildir.** Colyseus biletsiz eşleştirme hata yolu, gerçek hesap güvenliği, Android testi ve 30 gerçek oyuncu yük testi çözülmeden kamusal yayın açılmayacaktır.
+
+
 ## ✅ C1 — Kalıcı oyuncu profili ve ülke ekonomisi bağlantısı
 
 - [C1 teknik uygulama, güvenlik sınırları ve test raporu](docs/pilot-c1-implementation.md)
