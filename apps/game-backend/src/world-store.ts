@@ -90,11 +90,12 @@ export class WorldStore {
           throw new WorldError('operation_id_reused_with_different_payload',409);
         return existing.rows[0].result;
       }
-      const sector=await db.query<{owner:string}>(
-        'SELECT owner_faction_id AS owner FROM sectors WHERE id=$1 FOR UPDATE',[intent.sectorId]
+      const sector=await db.query<{owner:string;state:string}>(
+        'SELECT owner_faction_id AS owner,state FROM sectors WHERE id=$1 FOR UPDATE',[intent.sectorId]
       );
       if(!sector.rowCount)throw new WorldError('sector_not_found',404);
       if(sector.rows[0].owner!==intent.factionId)throw new WorldError('not_sector_owner',403);
+      if(sector.rows[0].state!=='OWNED')throw new WorldError('sector_contested_upgrades_locked',409);
       const old=await db.query<{level:number}>(
         'SELECT level FROM base_structures WHERE sector_id=$1 AND kind=$2 FOR UPDATE',
         [intent.sectorId,intent.kind]
