@@ -20,8 +20,8 @@ export class MackaFrontlineRoom extends Room {
   async onAuth(_client:Client,options:unknown):Promise<GuestClaims|PilotMatchClaims|false> {
     const opts=options&&typeof options==='object'
       ?options as Record<string,unknown>:{};
-    if(opts.matchTicket!==undefined){
-      const identity=verifyPilotMatchTicket(opts.matchTicket);
+    if(opts.pilotPass!==undefined){
+      const identity=verifyPilotMatchTicket(opts.pilotPass);
       const db=developmentPilotStore();
       if(!identity||!db){
         if(process.env.NODE_ENV==='test')console.log('C2 room admission denied: invalid signature or DB unavailable');
