@@ -25,6 +25,19 @@ test('A3 rejects missing/forged guest passes on the network without breaking act
     await assert.rejects(server.connectTo(room,{guestTicket:'forged-ticket'}),
       /auth|reject|invalid|525|401|forbidden/i);
 
+    // The HTTP matchmaker must return a single, bounded error response
+    // rather than hanging or throwing ERR_HTTP_HEADERS_SENT on an unknown room.
+    const missingRoom=await fetch('http://127.0.0.1:2568/matchmake/joinOrCreate/nonexistent_room',{
+      method:'POST',headers:{'content-type':'application/json'},body:'{}',
+      signal:AbortSignal.timeout(5000)
+    });
+    assert.ok(missingRoom.status>=400,'unknown room must not be accepted');
+    await missingRoom.text();
+    const health=await fetch('http://127.0.0.1:2568/api/v1/online-health',{
+      signal:AbortSignal.timeout(5000)
+    });
+    assert.equal(health.status,200,'server must remain responsive after a rejected request');
+
     // No denied client was admitted and the original match stays available.
     assert.equal(room.game.snapshot().players.length,1);
     assert.equal(room.game.snapshot().bots,0);
