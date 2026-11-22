@@ -11,6 +11,7 @@ on:
       - 'maps/macka.html'
       - 'tests/online-macka.test.ts'
       - 'tests/pilot-match.test.ts'
+      - 'tests/frontline-room.test.ts'
       - 'tests/smoke-online-macka.mjs'
       - 'tests/smoke-online-pilot.mjs'
       - 'package.json'
