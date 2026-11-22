@@ -19,6 +19,7 @@
     "apps/game-backend/src/**/*.ts",
     "packages/protocol/src/**/*.ts",
     "tests/world-core.test.ts",
-    "tests/online-macka.test.ts"
+    "tests/online-macka.test.ts",
+    "tests/pilot-profile.test.ts"
   ]
 }
