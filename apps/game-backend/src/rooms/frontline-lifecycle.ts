@@ -25,6 +25,8 @@ const SECTOR='TR-MACKA' as const;
 const MIN_DURATION_MS=1000;
 const MAX_DURATION_MS=600000;
 const DEFAULT_DURATION_MS=150000;
+const LEASE_REFRESH_MS=5000;
+const START_RETRY_MS=5000;
 function durationMs():number{
   const input=Number(process.env.DEV_FRONTLINE_DURATION_MS||DEFAULT_DURATION_MS);
   return Number.isInteger(input)&&input>=MIN_DURATION_MS&&input<=MAX_DURATION_MS
@@ -50,6 +52,10 @@ export class FrontlineLifecycle {
   private finishing:Promise<FrontlineSettlement|null>|null=null;
   private finalScores:Scores|null=null;
   private latest:FrontlineWorldState|null=null;
+  private renewing:Promise<void>|null=null;
+  private nextLeaseRenewAt=0;
+  private nextStartAttemptAt=0;
+  private leaseLost=false;
   private readonly store:FrontlineStore;
   private readonly world:WorldStore;
   constructor(
@@ -63,20 +69,29 @@ export class FrontlineLifecycle {
     this.world=new WorldStore(db.pool);
   }
   state():FrontlineWorldState|null{return this.latest;}
-  isRoundLocked():boolean{return this.finalScores!==null;}
+  isRoundLocked():boolean{return this.finalScores!==null||this.leaseLost;}
   async tryStart():Promise<void>{
-    if(this.closed||this.opened||this.pending)return this.pending??Promise.resolve();
+    if(this.closed||this.opened||this.pending||this.finalScores)
+      return this.pending??Promise.resolve();
     const teams=this.participants();
-    if(!teams.has('TR')||!teams.has('DE'))return;
+    if(!teams.has('TR')||!teams.has('DE')||Date.now()<this.nextStartAttemptAt)return;
+    this.nextStartAttemptAt=Date.now()+START_RETRY_MS;
     const op=(async()=>{
-      const before=await ownerFromWorld(this.world);
-      if(before.state!=='OWNED')return; // Another room is already contesting this sector.
+      let before=await ownerFromWorld(this.world);
+      if(before.state==='CONTESTED'){
+        // Only a database-expired lease may be reclaimed. Another live room
+        // keeps the sector contested until it finishes or loses its lease.
+        await this.store.recoverExpired(10);
+        before=await ownerFromWorld(this.world);
+      }
+      if(before.state!=='OWNED')return;
       const attackerFactionId:FactionId=before.ownerFactionId==='TR'?'DE':'TR';
       const opened=await this.store.begin({
         battleId:randomUUID(),sectorId:SECTOR,sourceRoomId:this.sourceRoomId,attackerFactionId
       });
       this.opened=opened;
       this.endsAt=Date.now()+durationMs();
+      this.nextLeaseRenewAt=Date.now()+LEASE_REFRESH_MS;
       if(this.closed||!this.hasTwoTeams()){
         await this.store.cancel(opened.battleId,this.sourceRoomId);
         this.opened=null;this.endsAt=null;
@@ -138,12 +153,40 @@ export class FrontlineLifecycle {
     finally{if(this.finishing===task)this.finishing=null;}
   }
   async tick(scores:Scores):Promise<void>{
-    if(this.closed||!this.opened||this.endsAt===null||Date.now()<this.endsAt)return;
-    await this.finish(scores);
+    if(this.closed)return;
+    if(!this.opened){
+      // When the previous server crashed, a newly opened room can retry the
+      // contest after lease expiration without admin intervention.
+      if(!this.finalScores&&!this.pending)await this.tryStart();
+      return;
+    }
+    if(!this.renewing&&Date.now()>=this.nextLeaseRenewAt){
+      const battle=this.opened;
+      this.nextLeaseRenewAt=Date.now()+LEASE_REFRESH_MS;
+      const renewal=this.store.renewLease(battle.battleId,this.sourceRoomId)
+        .then(active=>{
+          if(!active&&this.opened?.battleId===battle.battleId){
+            // Never settle a round for which another process can recover the
+            // stale lease. Stop accepting score-changing player input.
+            this.leaseLost=true;
+            this.closed=true;
+            if(this.latest)this.broadcast({...this.latest,outcome:'UNAVAILABLE'});
+          }
+        }).catch(error=>{
+          this.nextLeaseRenewAt=Date.now()+2000;
+          throw error;
+        });
+      this.renewing=renewal;
+      try{await renewal;}
+      finally{if(this.renewing===renewal)this.renewing=null;}
+    }
+    if(!this.closed&&this.opened&&this.endsAt!==null&&Date.now()>=this.endsAt)
+      await this.finish(scores);
   }
   async dispose():Promise<void>{
     if(this.pending)await this.pending.catch(()=>{});
     if(this.finishing)await this.finishing.catch(()=>{});
+    if(this.renewing)await this.renewing.catch(()=>{});
     if(this.closed)return;
     this.closed=true;
     if(!this.opened)return;
