@@ -8,6 +8,7 @@ import {Client} from '@colyseus/sdk';
 
 if(new URLSearchParams(location.search).get('online')==='1'){
   const params=new URLSearchParams(location.search);
+  const pilotMode=params.get('pilot')==='1';
   let started=false;
   function attach(map){
     if(started||!map)return;
