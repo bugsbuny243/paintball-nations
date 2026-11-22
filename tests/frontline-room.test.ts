@@ -82,6 +82,11 @@ test('C4 real pilot match automatically captures/defends Maçka and broadcasts w
       s=>s.sectors[0]?.state==='OWNED'&&s.sectors[0]?.ownerFactionId==='DE',
       'DE capture after room timer');
     assert.equal((await world.snapshot()).worldVersion,2);
+    // The round is over: late input must not restart movement or alter the result.
+    red.send('input',{seq:2,mx:0,mz:0,yaw:180,pitch:0,fire:true});
+    await sleep(100);
+    assert.equal(room.game.players.get(red.sessionId)?.lastSeq,1);
+    assert.equal(room.game.scores.red,100);
     const transferred=await pool.query(
       'SELECT previous_faction_id,new_faction_id FROM sector_ownership_history');
     assert.equal(transferred.rowCount,1);
