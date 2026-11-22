@@ -68,10 +68,11 @@ test('C4 real pilot match automatically captures/defends Maçka and broadcasts w
     assert.equal(contested.sectors[0].ownerFactionId,'TR');
     assert.equal(contested.worldVersion,1);
 
-    // Browser-provided winner, owner and score messages have no room handlers.
-    red.send('frontline.settle',{winnerFactionId:'TR',attackerScore:999999});
-    blue.send('set_world_owner',{ownerFactionId:'DE'});
-    red.send('set_score',{blue:0,red:999999});
+    // Client can submit only control input. Forged authority fields are ignored.
+    red.send('input',{seq:1,mx:0,mz:0,yaw:180,pitch:0,fire:false,
+      winnerFactionId:'TR',attackerScore:999999,ownerFactionId:'DE',score:999999});
+    blue.send('input',{seq:1,mx:0,mz:0,yaw:0,pitch:0,fire:false,
+      worldVersion:999999,ownerFactionId:'DE',score:999999});
     await sleep(150);
     assert.equal((await world.snapshot()).sectors[0].state,'CONTESTED');
     assert.equal(room.game.scores.red,0);
