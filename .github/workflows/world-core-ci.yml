@@ -3,6 +3,8 @@ name: Validate persistent world core A1
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
     paths:
       - 'apps/game-backend/**'
       - 'packages/protocol/**'
@@ -18,7 +20,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: pbn-world-core
+  group: pbn-world-core-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
