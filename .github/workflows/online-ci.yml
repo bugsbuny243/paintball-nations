@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'apps/game-backend/src/**'
+      - 'apps/game-backend/sql/**'
       - 'maps/macka-online-client.js'
       - 'maps/macka-viewer.js'
       - 'maps/macka.html'
