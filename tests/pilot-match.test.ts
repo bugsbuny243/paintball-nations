@@ -65,7 +65,7 @@ test('C2 two PostgreSQL-backed pilots join with faction-derived teams and expiri
       /auth|reject|invalid|525|401|forbidden/i,
       'revoked PostgreSQL session must be denied by the actual network');
     // The other pilot remains in the live room after the rejected connection.
-    assert.equal(room.game.snapshot().players.filter(p=>p.team==='red').length,1);
+    assert.equal(room.game.snapshot().playerCounts.red,1);
     await red.leave();
   }finally{
     await server.shutdown();
