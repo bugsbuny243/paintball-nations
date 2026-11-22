@@ -143,7 +143,7 @@ if(new URLSearchParams(location.search).get('online')==='1'){
           const pilot=await response.json();
           if(typeof pilot?.ticket!=='string'||pilot?.profile?.factionId!==faction)
             throw new Error('Maç bileti veya ülke doğrulaması başarısız');
-          room=await client.joinOrCreate('macka_frontline',{matchTicket:pilot.ticket});
+          room=await client.joinOrCreate('macka_frontline',{pilotPass:pilot.ticket});
           panel.dataset.pilotId=pilot.profile.id;
           panel.dataset.factionId=faction;
           status('Pilot bağlandı · '+faction+' · '+pilot.profile.displayName);
