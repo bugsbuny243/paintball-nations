@@ -12,24 +12,37 @@ const browser=await chromium.launch({
 const context=await browser.newContext({viewport:{width:960,height:540}});
 const tr=await context.newPage(),de=await context.newPage();
 const errors=[];
+const httpErrors=[];
+for(const [name,page] of [['TR',tr],['DE',de]]){
+  page.on('response',r=>{
+    if(r.status()>=400)httpErrors.push(name+' HTTP '+r.status()+' '+new URL(r.url()).pathname);
+  });
+  page.on('console',msg=>{
+    if(msg.type()==='error')errors.push(name+' console: '+msg.text());
+  });
+}
+async function waitForPilot(page,label){
+  try{
+    await page.waitForFunction(faction=>{
+      const panel=document.querySelector('#online-macka-hud');
+      return panel?.dataset.factionId===faction&&
+        panel?.dataset.pilotId?.length===36&&
+        document.querySelector('#online-state')?.textContent?.includes('Pilot bağlandı');
+    },label,{timeout:25000});
+  }catch(error){
+    const state=await page.locator('#online-state').textContent().catch(()=>null);
+    console.error('C2 browser '+label+' did not connect:',state,'http:',httpErrors,'runtime:',errors);
+    throw error;
+  }
+}
 for(const [label,page] of [['TR',tr],['DE',de]])
   page.on('pageerror',err=>errors.push(label+': '+err.message));
 try{
   const root='http://127.0.0.1:8765/maps/macka.html?online=1&pilot=1&faction=';
   await tr.goto(root+'TR',{waitUntil:'domcontentloaded',timeout:30000});
-  await tr.waitForFunction(()=>{
-    const panel=document.querySelector('#online-macka-hud');
-    return panel?.dataset.factionId==='TR'&&
-      panel?.dataset.pilotId?.length===36&&
-      document.querySelector('#online-state')?.textContent?.includes('Pilot bağlandı');
-  },null,{timeout:45000});
+  await waitForPilot(tr,'TR');
   await de.goto(root+'DE',{waitUntil:'domcontentloaded',timeout:30000});
-  await de.waitForFunction(()=>{
-    const panel=document.querySelector('#online-macka-hud');
-    return panel?.dataset.factionId==='DE'&&
-      panel?.dataset.pilotId?.length===36&&
-      document.querySelector('#online-state')?.textContent?.includes('Pilot bağlandı');
-  },null,{timeout:45000});
+  await waitForPilot(de,'DE');
   const idTr=await tr.locator('#online-macka-hud').getAttribute('data-pilot-id');
   const idDe=await de.locator('#online-macka-hud').getAttribute('data-pilot-id');
   assert.notEqual(idTr,idDe);
