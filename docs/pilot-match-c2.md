@@ -49,11 +49,11 @@ Pilot kayıt uçları yalnız loopback üzerinde ve üretim dışı durumda aç�
 
 ## Açık güvenlik ve yayın engelleri
 
-- **Geçersiz/biletsiz Colyseus matchmaking ağ isteği** sürüm 0.18.10 test ortamında ERR_HTTP_HEADERS_SENT hatası üretebiliyor. İmza doğrulaması ve geçerli bağlantılar test edildi; bu negatif ağ yolu henüz güvenli şekilde doğrulanmadı. Sunucu kamuya açık dağıtıma hazır değildir.
+- **Güncellenen negatif ağ doğrulaması:** Biletsiz/sahte biletler ve PostgreSQL oturumu iptal edilmiş pilot gerçek ağda [reddedildi](https://github.com/bugsbuny243/paintball-nations/actions/runs/45038047401). İlk çoklu test sunucusu başlangıcı `ERR_HTTP_HEADERS_SENT` ürettiğinden yeniden başlatma/failover güvenliği hâlâ ayrıca test edilmelidir. Sunucu kamuya açık dağıtıma hazır değildir.
 - Gerçek hesap kurtarma, oturum yenileme, moderasyon, topluluk güvenliği ve erişim yetkileri tamamlanmadı.
 - Oturum iptalinin açık maç bağlantısını anında bitirmesi henüz yapılmadı.
-- Maç sonu sonuçları kalıcı dünya sektörlerine ve kariyer puanına henüz aktarılmıyor.
+- Maç sonu C4 geliştirme entegrasyonunda kalıcı Maçka sektörüne yazılıyor; kariyer puanı sistemi henüz entegre değil.
 - Gerçek Android, 30 kişi ağ/yük, izleme ve veri yedekleme testleri tamamlanmadı.
 - Yeni ücretli hizmet veya genel erişimli sunucu açılmadı.
 
-**Sonraki iş:** Biletsiz bağlantı hata yolunun güvenle reddini çözmek, ardından açık maç oturumunun iptalini ve maç sonucunun dünya ekonomisine tek seferlik işlenmesini eklemek.
+**Sonraki iş:** Geçersiz bağlantıların yeniden başlatma/failover koşullarını doğrulamak, oturum iptalinin devam eden maça etkisini tanımlamak ve kalıcı C4 sektör sonucunu kariyer/strateji ekonomisine genişletmek.

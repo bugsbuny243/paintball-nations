@@ -6,7 +6,7 @@
 - [8/8 başarılı Colyseus ağ testi ve 2 Chrome/PlayCanvas regresyonu](https://github.com/bugsbuny243/paintball-nations/actions/runs/45018585732)
 - Geçerli TR/DE pilotları aynı odaya girdiğinde geliştirme modu sektörü çekişmeli başlatır. Maç sonu **sunucunun tuttuğu ve kilitlediği skor** üzerinden sonuç C3 PostgreSQL işlemiyle bölgeye uygulanır. Beraberlikte sektör korunur; `world_state` sonucu oyun HUD’una yayınlanır.
 - **Varsayılan olarak kapalı:** Yalnız `DEV_ENABLE_FRONTLINES=1` + `DEV_REQUIRE_PILOT=1` olan *yerel geliştirme* odasında çalışır. Normal misafir ve çevrim dışı Maçka korunmuştur.
-- **Açık güvenlik sorunu:** Geçersiz Colyseus matchmaking isteğinin reddindeki `ERR_HTTP_HEADERS_SENT` hâlâ çözülmedi; bu aşama üretime veya halka açık sunucuya dağıtılmadı.
+- **Ağ reddetme testi (22 Kasım):** İzole Colyseus sürecinde sahte/biletsiz bilet, iptal edilmiş pilot ve bilinmeyen oda reddi testleri [geçti](https://github.com/bugsbuny243/paintball-nations/actions/runs/45038047401). Daha önce art arda aynı test sürecinde sunucu açılınca görülen `ERR_HTTP_HEADERS_SENT` vakasının yeniden başlatma/failover etkileri ayrıca sınanmalı. **Kamusal sunucu kapalıdır.**
 - Yalnız tek test sektörü var; 30 gerçek bağlantı, gerçek Android ve C4 HUD görsel testi, botlar ve stratejik kontrol noktaları henüz tamamlanmadı.
 
 
@@ -23,7 +23,7 @@
 - [Çalışan C2 pilot/maç oturumu, test kanıtı ve üretim sınırları](docs/pilot-match-c2.md)
 - [7/7 ağ ve oyun kuralı testi + iki gerçek Chrome'da kalıcı pilot bağlantısı](https://github.com/bugsbuny243/paintball-nations/actions/runs/45016303715)
 - Sunucu doğrulanmış TR/DE pilot kimliği ve 90 saniyelik maç bileti; ülkeye göre takım atama ve oturum iptali testi tamamlandı.
-- **Henüz canlı oyun değildir.** Colyseus biletsiz eşleştirme hata yolu, gerçek hesap güvenliği, Android testi ve 30 gerçek oyuncu yük testi çözülmeden kamusal yayın açılmayacaktır.
+- **Henüz canlı oyun değildir.** Tek süreçli kimlik reddetme ağ testleri geçse de gerçek hesap güvenliği, tekrarlı başlatma, Android ve 30 gerçek oyuncu yük testleri tamamlanmadan kamusal yayın açılmayacaktır.
 
 
 ## ✅ C1 — Kalıcı oyuncu profili ve ülke ekonomisi bağlantısı
@@ -31,22 +31,22 @@
 - [C1 teknik uygulama, güvenlik sınırları ve test raporu](docs/pilot-c1-implementation.md)
 - [PostgreSQL üzerinde 15/15 başarılı test](https://github.com/bugsbuny243/paintball-nations/actions/runs/45010029239)
 - Rastgele takma isim, sunucuda UUID profil, 14 günlük hash'lenmiş ve iptal edilebilir yerel geliştirme oturumu; yalnız oyuncunun bağlı olduğu ülkenin kaynaklarını okuma.
-- **Aşama notu:** C1 profil çekirdeği C2 geliştirme bağlantısıyla PlayCanvas/Colyseus'a bağlandı; yine de kamusal canlı sunucu yok. A3 biletsiz giriş hatası ve gerçek hesap kurtarma/izin sistemi tamamlanmadan yayın yapılmayacak.
+- **Aşama notu:** C1 profil çekirdeği C2 geliştirme bağlantısıyla PlayCanvas/Colyseus'a bağlandı; yine de kamusal canlı sunucu yok. A3 reddetme testleri artık izole CI sürecinde geçiyor; gerçek hesap kurtarma, üretim izinleri ve operasyonel güvenlik tamamlanmadan yayın yapılmayacak.
 
 
 ## 🧠 Çekirdek Oyun Sistemleri V1 — Kalıcı Dünya Ürün Tasarımı
 
 - [Tam tasarım: Üs Endüstrisi, Stratejik Kariyer, Ülke Ligleri, Özel Operasyonlar, Komuta Çubuğu, botlar ve 15v15](docs/paintball-nations-core-systems-v1.md)
 - **Tasarımdır; uygulandı anlamına gelmez.** Mevcut A1 ekonomi ve A2/A3 çevrim içi prototipleri korunuyor. OldOrbit ekranlarından çıkarılan mekanik ilkeler kopyalanmadan özgün Paintball Nations kurallarına dönüştürülmüştür.
-- Güncel teknik üst mimari: [Kalıcı Dünya V2](docs/world-architecture-v2.md). A3 kimlik reddetme bloklayıcısı çözülmeden kamusal sunucu açılmaz.
+- Güncel teknik üst mimari: [Kalıcı Dünya V2](docs/world-architecture-v2.md). İzole A3 ağ reddetme testinin geçmesi tek başına kamusal sunucu açma izni değildir.
 
 
 ## 🔐 A3 — Geliştirme misafir biletleri / doğrulanmış pozitif bağlantı
 
-- [A3 kodu, test sonuçları ve çözülmemiş güvenlik bloklayıcısı](docs/guest-session-a3.md)
+- [A3 kodu, tarihsel hata ve güncel güvenlik test sınırları](docs/guest-session-a3.md)
 - [5/5 geçen Colyseus ve iki Chrome tarayıcısı testi](https://github.com/bugsbuny243/paintball-nations/actions/runs/44660851253)
 - Sunucu imzalı, 10 dakikalık geçici bilet; istemci `?online=1` modunda bileti alıp Maçka odasına katılır.
-- **Bloklayıcı:** Biletsiz bağlantının ağ seviyesinde reddedilmesi Colyseus 0.18.10 altında `ERR_HTTP_HEADERS_SENT` hatası doğuruyor. Bu negatif ağ testi henüz geçmedi; şu anda yalnız fonksiyon düzeyinde reddetme doğrulaması var. **Kamusal üretim dağıtımı kapalı.**
+- **Güncel doğrulama:** Biletsiz/sahte konuk biletleri, iptal edilmiş pilot biletleri ve bilinmeyen HTTP oda isteği gerçek ağda [başarıyla reddedildi](https://github.com/bugsbuny243/paintball-nations/actions/runs/45038047401); reddetme sonrası geçerli kullanıcılar bağlanabildi. Eski hata, aynı test işçisinde art arda `boot()` çağrılarıyla yeniden üretilebiliyordu; bu tekrar başlatma koşulu üretim açısından çözülmüş sayılmaz. **Kamusal dağıtım kapalıdır.**
 - Gerçek oyuncu hesabı, oturum iptali, moderasyon, 30 eşzamanlı ağ bağlantısı ve 24/7 sunucu henüz yok.
 
 
