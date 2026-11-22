@@ -58,3 +58,4 @@ jobs:
         run: |
           npm run world:test
           npm run pilot:test
+          npm run frontline:test
