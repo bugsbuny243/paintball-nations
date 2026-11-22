@@ -14,7 +14,7 @@
     "world:verify": "npm run world:check && npm run world:test && npm run pilot:test",
     "online:serve": "tsx apps/game-backend/src/online-server.ts",
     "online:build": "esbuild maps/macka-online-client.js --bundle --minify --format=iife --platform=browser --target=es2020 --outfile=maps/macka-online.bundle.js",
-    "online:test": "tsx --test tests/online-macka.test.ts",
+    "online:test": "tsx --test --test-concurrency=1 tests/online-macka.test.ts tests/pilot-match.test.ts",
     "online:verify": "npm run world:check && npm run online:build && npm run online:test",
     "pilot:test": "tsx --test tests/pilot-profile.test.ts"
   },
